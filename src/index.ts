@@ -1,92 +1,81 @@
 import cluster from "node:cluster";
-import http from "node:http";
+import { Bot } from "grammy";
+import dotenv from "dotenv";
 
-const PORT = 3000;
+dotenv.config({ path: ".env.local" });
+if (!process.env.BOT_TOKEN_ONE) {
+  throw new Error("BOT_TOKEN_ONE is not defined");
+}
+if (!process.env.BOT_TOKEN_TWO) {
+  throw new Error("BOT_TOKEN_TWO is not defined");
+}
+
+interface WorkerMessage {
+  type: "INITIALIZE_BOT" | "SHUTDOWN";
+  token?: string;
+}
+
+// Your bot configurations
+const bots: string[] = [process.env.BOT_TOKEN_ONE, process.env.BOT_TOKEN_TWO];
 
 if (cluster.isPrimary) {
-  console.log(`Primary ${process.pid} is running`);
+  const workerBotTokens = new Map();
 
-  for (let i = 0; i < 3; i++) {
-    cluster.fork();
-  }
-
-  cluster.on("exit", (worker, code, signal) => {
-    console.log(
-      `Worker ${worker.process.pid} died with code: ${code} and signal: ${signal}`,
-    );
-
-    console.log("Starting a new worker");
-    cluster.fork();
+  // Map a worker to a bot
+  bots.forEach((bot, _) => {
+    const worker = cluster.fork();
+    workerBotTokens.set(worker.id, bot);
   });
 
-  const server = http.createServer((req, res) => {
-    res.writeHead(200);
-    res.end(`Hello from Primary ${process.pid}\n`);
-
-    if (cluster.workers) {
-      try {
-        const workerIds = Object.keys(cluster.workers);
-        const workerId =
-          workerIds[Math.floor(Math.random() * workerIds.length)];
-        const worker = cluster.workers[workerId];
-
-        if (!worker) return;
-
-        try {
-          worker.send("request");
-          console.log(
-            `Delegated background processing to Worker ${worker.process.pid}`,
-          );
-        } catch (error: unknown) {
-          console.error(
-            `Failed to send message to worker ${worker.process.pid}:`,
-            error instanceof Error ? error.message : "Unknown error",
-          );
-        }
-      } catch (err) {
-        console.error("Error delegating to worker:", err);
-      }
+  // When worker initializes, send the bot config to initialize the bot
+  cluster.on("message", (worker, message: WorkerMessage) => {
+    if (message.type === "INITIALIZE_BOT") {
+      const token = workerBotTokens.get(worker.id);
+      worker.send({ type: "INITIALIZE_BOT", token });
     }
   });
+}
 
-  server.on("error", (err) => {
-    console.error("Server error:", err);
-  });
-
-  server.listen(PORT, () => {
-    console.log(`Primary server listening on port ${PORT}`);
-  });
+if (cluster.isWorker) {
+  process.send?.({ type: "INITIALIZE_BOT" });
 
   process.on("SIGINT", () => {
-    console.log("Shutting down server...");
-    server.close(() => {
-      console.log("Server shut down");
-      process.exit(0);
-    });
-  });
-}
-
-if (!cluster.isPrimary) {
-  console.log(`Worker ${process.pid} started`);
-
-  process.on("message", (msg) => {
-    try {
-      if (msg === "request") {
-        // Simulate CPU-intensive work
-        let counter = 0;
-        for (let i = 0; i < 1e7; i++) {
-          counter++;
-        }
-        console.log(
-          `Worker ${process.pid} processed request, counter: ${counter}`,
-        );
-      }
-    } catch (err) {
-      console.error(`Worker ${process.pid} error:`, err);
+    for (const id in cluster.workers) {
+      const worker = cluster.workers[id];
+      worker?.send({ type: "SHUTDOWN" });
     }
   });
 
-  process.on("error", (err) => {
-    console.error(`Worker ${process.pid} error:`, err);
+  process.on("message", async (msg: WorkerMessage) => {
+    if (msg.type === "INITIALIZE_BOT") {
+      const token = msg.token;
+      if (!token) {
+        throw new Error("No token provided for bot configuration");
+      }
+      InitializeBot(token);
+    }
+  });
+
+  process.on("uncaughtException", (err) => {
+    console.error(`Exception in worker ${process.pid}:`, err);
+    //TODO: add sentry
+
+    process.exit(1);
   });
 }
+
+const InitializeBot = async (token: string) => {
+  try {
+    const bot = new Bot(token);
+    bot.on("message", async (ctx) => {
+      await ctx.reply(`Hello from ${ctx.me.username}!`);
+    });
+    await bot.start({
+      onStart: (botInfo) => {
+        console.log(`@${botInfo.username} is running `);
+      },
+    });
+  } catch (err) {
+    throw new Error(`Failed to initialize worker's bot`);
+  }
+};
