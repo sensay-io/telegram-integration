@@ -10,20 +10,19 @@ if (!process.env.BOT_TOKEN_TWO) {
   throw new Error("BOT_TOKEN_TWO is not defined");
 }
 
-interface WorkerMessage {
-  type: "INITIALIZE_BOT" | "SHUTDOWN";
-  token?: string;
-}
+type InitializeBotMessage = { type: "INITIALIZE_BOT"; token: string };
+type ShutdownMessage = { type: "SHUTDOWN" };
+type WorkerMessage = InitializeBotMessage | ShutdownMessage;
 
 // Your bot configurations
 const bots: string[] = [process.env.BOT_TOKEN_ONE, process.env.BOT_TOKEN_TWO];
 
 if (cluster.isPrimary) {
-  const workerBotTokens = new Map();
+  const workerBotTokens: Map<number, string> = new Map();
 
   // Map a worker to a bot
   bots.forEach((bot, _) => {
-    const worker = cluster.fork();
+    const worker = cluster.fork({ token: bot });
     workerBotTokens.set(worker.id, bot);
   });
 
@@ -48,11 +47,9 @@ if (cluster.isWorker) {
 
   process.on("message", async (msg: WorkerMessage) => {
     if (msg.type === "INITIALIZE_BOT") {
-      const token = msg.token;
-      if (!token) {
-        throw new Error("No token provided for bot configuration");
-      }
-      InitializeBot(token);
+      const token = process.env.token;
+      if (!token) throw new Error("Token not found in worker environment");
+      initializeBotClient(token);
     }
   });
 
@@ -64,7 +61,7 @@ if (cluster.isWorker) {
   });
 }
 
-const InitializeBot = async (token: string) => {
+const initializeBotClient = async (token: string) => {
   try {
     const bot = new Bot(token);
     bot.on("message", async (ctx) => {
