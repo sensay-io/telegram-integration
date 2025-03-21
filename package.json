@@ -1,13 +1,13 @@
 {
-	"name": "telegram",
-	"version": "1.0.0",
-	"description": "service to manage discord bots",
-	"main": "dist/index.js",
+	"name": "@sensay/telegram",
+	"version": "0.1.0",
+	"description": "Sensay Telegram integration",
 	"type": "module",
 	"scripts": {
-		"build": "tsc",
-		"start": "node dist/index.js",
-		"dev": "nodemon"
+		"build": "npm run build -ws --if-present",
+		"start": "npm run start -ws --if-present",
+		"dev": "npm run dev -ws --if-present",
+		"test": "npm run test -ws --if-present"
 	},
 	"keywords": [
 		"bots",
@@ -15,22 +15,10 @@
 		"sensay"
 	],
 	"author": "sensay",
-	"license": "ISC",
-	"lint-staged": {
-		"*.{js,ts,json}": "biome check --write src"
-	},
-	"dependencies": {
-		"@types/jsonwebtoken": "^9.0.9",
-		"dotenv": "^16.4.7",
-		"grammy": "^1.35.0",
-		"jsonwebtoken": "^9.0.2"
-	},
-	"devDependencies": {
-		"@biomejs/biome": "^1.9.4",
-		"@types/node": "^20.10.0",
-		"lint-staged": "^15.4.3",
-		"nodemon": "^3.0.1",
-		"tsx": "^4.19.3",
-		"typescript": "^5.3.2"
-	}
+	"dependencies": {},
+	"devDependencies": {},
+	"workspaces": [
+		"packages/bot",
+		"packages/orchestrator"
+	]
 }

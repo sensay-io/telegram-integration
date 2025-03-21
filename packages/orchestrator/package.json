@@ -1,0 +1,9 @@
+{
+  "name": "@sensay/orchestrator",
+  "version": "0.1.0",
+  "scripts": {
+    "test": "echo \"Error: no test specified\""
+  },
+  "author": "sensay",
+  "description": "A service to manage Telegram bots"
+}

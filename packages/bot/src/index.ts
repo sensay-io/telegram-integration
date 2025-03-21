@@ -1,6 +1,6 @@
 import cluster from "node:cluster";
-import { Bot } from "grammy";
 import dotenv from "dotenv";
+import { Bot } from "grammy";
 
 dotenv.config({ path: ".env.local" });
 if (!process.env.BOT_TOKEN_ONE) {
