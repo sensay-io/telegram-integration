@@ -1,0 +1,43 @@
+{
+  "compilerOptions": {
+    // Needs to be composite to allow references
+    "composite": true,
+
+    // Enable latest features
+    "lib": ["ESNext"],
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleDetection": "force",
+    "allowJs": true,
+
+    // Node.js settings
+    "moduleResolution": "Node",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+
+    // Output settings
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "sourceMap": true,
+    "declaration": true,
+    "removeComments": true,
+
+    // Best practices
+    "strict": true,
+    "skipLibCheck": true,
+    "incremental": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+
+    // Some stricter flags (disabled by default)
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noPropertyAccessFromIndexSignature": false,
+
+    // Types
+    "types": ["node"],
+    "paths": {
+      "@sensay/*": ["./packages/*"]
+    }
+  }
+}

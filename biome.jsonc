@@ -1,0 +1,32 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "formatter": {
+    "indentStyle": "space",
+    "indentWidth": 2
+  },
+  "organizeImports": {
+    "enabled": true
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true
+    }
+  },
+  "files": {
+    "ignore": ["node_modules", "dist"]
+  },
+  "overrides": [
+    {
+      // Biome treats tsconfig.json files in a special way,
+      // but only if file name is exactly tsconfig.json.
+      // https://biomejs.dev/guides/configure-biome/#well-known-files
+      "include": ["tsconfig.base.json"],
+      "json": {
+        "parser": {
+          "allowComments": true
+        }
+      }
+    }
+  ]
+}
