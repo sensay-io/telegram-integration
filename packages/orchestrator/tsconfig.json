@@ -6,5 +6,10 @@
     "paths": {
       "@sensay/*": ["./packages/*"]
     }
-  }
+  },
+  "references": [
+    {
+      "path": "../bot"
+    }
+  ]
 }

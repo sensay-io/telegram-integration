@@ -1,24 +1,28 @@
 {
-	"name": "@sensay/telegram",
-	"version": "0.1.0",
-	"description": "Sensay Telegram integration",
-	"type": "module",
-	"scripts": {
-		"build": "npm run build -ws --if-present",
-		"start": "npm run start -ws --if-present",
-		"dev": "npm run dev -ws --if-present",
-		"test": "npm run test -ws --if-present"
-	},
-	"keywords": [
-		"bots",
-		"telegram",
-		"sensay"
-	],
-	"author": "sensay",
-	"dependencies": {},
-	"devDependencies": {},
-	"workspaces": [
-		"packages/bot",
-		"packages/orchestrator"
-	]
+  "name": "@sensay/telegram",
+  "version": "0.1.0",
+  "author": "sensay",
+  "description": "Sensay Telegram integration",
+  "type": "module",
+  "keywords": ["bots", "telegram", "sensay"],
+  "scripts": {
+    "build": "npm run build -ws --if-present",
+    "start": "npm run start -ws --if-present",
+    "dev:bot": "npm run dev -w packages/bot",
+    "dev:orc": "npm run dev -w packages/orchestrator",
+    "test": "npm run test -ws --if-present",
+    "lint": "biome lint --diagnostic-level=warn",
+    "check": "biome check --diagnostic-level=warn",
+    "lint:write": "biome lint --diagnostic-level=warn --write",
+    "check:write": "biome check --diagnostic-level=warn --write"
+  },
+  "lint-staged": {
+    "*.{js,ts,json}": "biome check --write src"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/node": "^22.13.11",
+    "lint-staged": "^15.5.0"
+  },
+  "workspaces": ["packages/*"]
 }

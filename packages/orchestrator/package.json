@@ -1,9 +1,24 @@
 {
   "name": "@sensay/orchestrator",
   "version": "0.1.0",
-  "scripts": {
-    "test": "echo \"Error: no test specified\""
-  },
+  "type": "module",
   "author": "sensay",
-  "description": "A service to manage Telegram bots"
+  "keywords": ["bots", "telegram", "sensay"],
+  "description": "A service to run Telegram bots in cluster mode",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "nodemon"
+  },
+  "dependencies": {
+    "@sensay/bot": "*",
+    "pino": "^9.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.11",
+    "nodemon": "^3.1.9",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  }
 }

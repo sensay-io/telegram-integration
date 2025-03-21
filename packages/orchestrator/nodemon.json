@@ -2,5 +2,5 @@
   "watch": ["src"],
   "ext": "ts",
   "ignore": ["src/**/*.spec.ts"],
-  "exec": "tsx src/cli.ts"
+  "exec": "tsx src/index.ts"
 }
