@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import { initializeBotClient } from "./bot";
+import { initializeBotClient } from "./bot.js";
 
 dotenv.config({ path: ".env.local" });
 if (!process.env.BOT_TOKEN) {
