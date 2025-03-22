@@ -7,7 +7,9 @@
   "keywords": ["bots", "telegram", "sensay"],
   "scripts": {
     "build": "npm run build -ws --if-present",
-    "start": "npm run start -ws --if-present",
+    "start": "npm run start:bot",
+    "start:bot": "npm run start -w packages/bot",
+    "start:orc": "npm run start -w packages/orchestrator",
     "dev:bot": "npm run dev -w packages/bot",
     "dev:orc": "npm run dev -w packages/orchestrator",
     "test": "npm run test -ws --if-present",
