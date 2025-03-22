@@ -1,31 +1,27 @@
 {
   "compilerOptions": {
-    // Needs to be composite to allow references
     "composite": true,
-
-    // Enable latest features
     "lib": ["ESNext"],
     "target": "ESNext",
-    "module": "ESNext",
+    "module": "Preserve",
     "moduleDetection": "force",
-    "allowJs": true,
-
-    // Node.js settings
     "moduleResolution": "Node",
     "esModuleInterop": true,
+    "isolatedModules": true,
     "resolveJsonModule": true,
+    "allowJs": true,
 
     // Output settings
     "outDir": "./dist",
     "rootDir": "./src",
     "sourceMap": true,
     "declaration": true,
+    "declarationMap": true,
     "removeComments": true,
 
     // Best practices
     "strict": true,
     "skipLibCheck": true,
-    "incremental": true,
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
 

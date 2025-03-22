@@ -1,17 +1,33 @@
 import assert from "node:assert";
 import cluster, { type Worker } from "node:cluster";
+import type { SensayAPI } from "./api";
 
 type BotToken = string;
 
 export class Orchestrator {
-  constructor(private readonly botTokens: BotToken[]) {}
+  constructor(
+    private readonly api: SensayAPI,
+    private readonly environmentTokens: BotToken[],
+  ) {}
 
-  start() {
+  async start() {
     assert(cluster.isPrimary, "Orchestrator must be running in primary mode");
+    console.log("Starting orchestrator", process.env.NODE_ENV);
 
-    // TODO: Load bot tokens from the API
+    // TODO: Use official Sensay API SDK
+    // TODO: Implement retry logic
+    const replicas = await this.api.getReplicas({ intergrations: "telegram" });
+    // TODO: Load bots in parallel
+    for (const replica of replicas) {
+      const bots = await this.api.getTelegramBots({
+        replicaUUID: replica.uuid,
+      });
+      for (const bot of bots) {
+        this.startWorker(bot.token);
+      }
+    }
 
-    for (const bot of this.botTokens) {
+    for (const bot of this.environmentTokens) {
       this.startWorker(bot);
     }
 
@@ -30,7 +46,10 @@ export class Orchestrator {
   }
 
   private startWorker(botToken: BotToken) {
-    const worker = cluster.fork({ token: botToken });
+    const worker = cluster.fork({
+      token: botToken,
+      NODE_ENV: process.env.NODE_ENV,
+    });
     worker.on("exit", () => {
       // TODO: Add exponential backoff retries logic
       console.log(`Worker ${worker.id}:${botToken} exited, restarting...`);

@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "author": "sensay",
   "description": "Sensay Telegram integration",
-  "type": "module",
   "keywords": ["bots", "telegram", "sensay"],
   "scripts": {
     "build": "npm run build -ws --if-present",
@@ -24,7 +23,9 @@
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@types/node": "^22.13.11",
-    "lint-staged": "^15.5.0"
+    "lint-staged": "^15.5.0",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
   },
   "workspaces": ["packages/*"]
 }

@@ -1,11 +1,13 @@
 import assert from "node:assert";
 import cluster from "node:cluster";
 import { initializeBotClient } from "@sensay/bot";
+import { FakeSensayAPI } from "./api";
 import { config } from "./config";
 import { Orchestrator } from "./orchestrator";
 
 if (cluster.isPrimary) {
-  const orchestrator = new Orchestrator(config.botTokens);
+  const api = new FakeSensayAPI(config.sensayApiUrl, config.sensayApiKey);
+  const orchestrator = new Orchestrator(api, config.botTokens);
   orchestrator.start();
 }
 

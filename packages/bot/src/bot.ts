@@ -2,18 +2,18 @@ import { Bot } from "grammy";
 
 export const initializeBotClient = async (token: string) => {
   try {
-    console.log("Initializing bot", token);
+    console.log("Initializing bot");
 
     const bot = new Bot(token);
 
-    if (process.env.NODE_ENV === "development" && token === "test") {
+    if (process.env.NODE_ENV === "development" && token.startsWith("test")) {
       console.log("Configuring test bot");
 
       bot.botInfo = {
         id: 42,
         first_name: "Test Bot",
         is_bot: true,
-        username: "test_bot",
+        username: token,
         can_join_groups: true,
         can_read_all_group_messages: true,
         can_connect_to_business: true,
@@ -21,9 +21,20 @@ export const initializeBotClient = async (token: string) => {
         supports_inline_queries: false,
       };
 
-      bot.api.config.use(() => {
-        // biome-ignore lint/suspicious/noExplicitAny: Mocking any API response
-        return { ok: true } as any;
+      bot.api.config.use((prev, method, payload) => {
+        console.log("method", method);
+        console.log("payload", payload);
+        if (method === "getUpdates") {
+          return new Promise((resolve) => {
+            setTimeout(() => {
+              // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+              resolve({ ok: true, result: [] } as any);
+            }, 30000);
+          });
+        }
+
+        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+        return Promise.resolve({ ok: true } as any);
       });
     }
 
