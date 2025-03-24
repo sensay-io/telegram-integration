@@ -2,12 +2,10 @@ import { Bot } from "grammy";
 
 export const initializeBotClient = async (token: string) => {
   try {
-    console.log("Initializing bot");
-
     const bot = new Bot(token);
 
     if (process.env.NODE_ENV === "development" && token.startsWith("test")) {
-      console.log("Configuring test bot");
+      console.log("Configuring test bot", token);
 
       bot.botInfo = {
         id: 42,
@@ -22,8 +20,7 @@ export const initializeBotClient = async (token: string) => {
       };
 
       bot.api.config.use((prev, method, payload) => {
-        console.log("method", method);
-        console.log("payload", payload);
+        console.log(`bot.${method}(${JSON.stringify(payload)})`);
         if (method === "getUpdates") {
           return new Promise((resolve) => {
             setTimeout(() => {
