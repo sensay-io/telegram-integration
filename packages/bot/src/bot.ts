@@ -7,7 +7,7 @@ export const initializeBotClient = async (token: string) => {
     const bot = new Bot(token);
 
     if (process.env.NODE_ENV === "development" && token === "test") {
-      console.log("Configurint test bot");
+      console.log("Configuring test bot");
 
       bot.botInfo = {
         id: 42,
@@ -22,7 +22,7 @@ export const initializeBotClient = async (token: string) => {
       };
 
       bot.api.config.use(() => {
-        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+        // biome-ignore lint/suspicious/noExplicitAny: Mocking any API response
         return { ok: true } as any;
       });
     }
