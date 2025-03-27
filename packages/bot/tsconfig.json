@@ -1,10 +1,8 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "baseUrl": "./",
     "rootDir": "src",
-    "outDir": "dist",
-    "paths": {
-      "@sensay/*": ["./packages/*"]
-    }
+    "outDir": "dist"
   }
 }

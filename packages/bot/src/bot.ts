@@ -1,50 +1,69 @@
-import { Bot } from "grammy";
+import { Bot } from 'grammy'
 
-export const initializeBotClient = async (token: string) => {
-  try {
-    const bot = new Bot(token);
+export class BotClient {
+  private readonly bot: Bot
 
-    if (process.env.NODE_ENV === "development" && token.startsWith("test")) {
-      console.log("Configuring test bot", token);
+  constructor(botToken: string) {
+    this.bot = new Bot(botToken)
+  }
 
-      bot.botInfo = {
-        id: 42,
-        first_name: "Test Bot",
-        is_bot: true,
-        username: token,
-        can_join_groups: true,
-        can_read_all_group_messages: true,
-        can_connect_to_business: true,
-        has_main_web_app: true,
-        supports_inline_queries: false,
-      };
+  isHealthy() {
+    return this.bot.isInited() && this.bot.isRunning()
+  }
 
-      bot.api.config.use((prev, method, payload) => {
-        console.log(`bot.${method}(${JSON.stringify(payload)})`);
-        if (method === "getUpdates") {
-          return new Promise((resolve) => {
-            setTimeout(() => {
-              // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-              resolve({ ok: true, result: [] } as any);
-            }, 30000);
-          });
-        }
+  start() {
+    this.bot.on('message', async (ctx) => {
+      await ctx.reply(`Hello from ${ctx.me.username}!`)
+    })
 
-        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-        return Promise.resolve({ ok: true } as any);
-      });
+    this.bot.catch((err) => {
+      console.error('Failed to start bot', err)
+    })
+
+    // Don't await bot.start method. It blocks until the bot is stopped.
+    // https://grammy.dev/ref/core/bot#start
+    this.bot.start({
+      onStart: (botInfo) => {
+        console.log(`@${botInfo.username} is running\n`)
+      },
+    })
+  }
+
+  async stop() {
+    await this.bot.stop()
+  }
+
+  mock(isTesting: boolean) {
+    this.bot.botInfo = {
+      id: 42,
+      first_name: 'Test Bot',
+      is_bot: true,
+      username: this.bot.token,
+      can_join_groups: true,
+      can_read_all_group_messages: true,
+      can_connect_to_business: true,
+      has_main_web_app: true,
+      supports_inline_queries: false,
     }
 
-    bot.on("message", async (ctx) => {
-      await ctx.reply(`Hello from ${ctx.me.username}!`);
-    });
+    this.bot.api.config.use((prev, method, payload) => {
+      if (!isTesting) {
+        console.log(
+          `\n[BotClient][${this.bot.botInfo.username}] bot.${method}(${JSON.stringify(payload)})\n`,
+        )
+      }
 
-    await bot.start({
-      onStart: (botInfo) => {
-        console.log(`@${botInfo.username} is running `);
-      },
-    });
-  } catch (err) {
-    throw new Error("Failed to initialize bot", { cause: err });
+      if (method === 'getUpdates') {
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            // biome-ignore lint/suspicious/noExplicitAny: Fake response
+            resolve({ ok: true, result: [] } as any)
+          }, 30000)
+        })
+      }
+
+      // biome-ignore lint/suspicious/noExplicitAny: Fake response
+      return Promise.resolve({ ok: true } as any)
+    })
   }
-};
+}

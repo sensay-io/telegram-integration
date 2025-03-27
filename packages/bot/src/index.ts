@@ -1,1 +1,1 @@
-export { initializeBotClient } from "./bot";
+export { BotClient } from './bot'

@@ -1,21 +1,26 @@
 {
   "name": "@sensay/telegram",
+  "type": "module",
   "version": "0.1.0",
-  "author": "sensay",
+  "license": "Apache-2.0",
+  "author": "Sensay",
   "description": "Sensay Telegram integration",
   "keywords": ["bots", "telegram", "sensay"],
   "scripts": {
-    "build": "npm run build -ws --if-present",
-    "start": "npm run start:bot",
-    "start:bot": "npm run start -w packages/bot",
-    "start:orc": "npm run start -w packages/orchestrator",
+    "build": "npm run build:bot && npm run build:orc",
+    "build:bot": "npm run build -w packages/bot",
+    "build:orc": "npm run build -w packages/orchestrator",
+    "start": "npm run start -ws --if-present",
     "dev:bot": "npm run dev -w packages/bot",
-    "dev:orc": "npm run dev -w packages/orchestrator",
+    "dev:orc": "npm run build && npm run dev -w packages/orchestrator",
     "test": "npm run test -ws --if-present",
     "lint": "biome lint --diagnostic-level=warn",
-    "check": "biome check --diagnostic-level=warn",
     "lint:write": "biome lint --diagnostic-level=warn --write",
+    "check": "biome check --diagnostic-level=warn",
     "check:write": "biome check --diagnostic-level=warn --write"
+  },
+  "engines": {
+    "node": ">=22.13.11"
   },
   "lint-staged": {
     "*.{js,ts,json}": "biome check --write src"
@@ -27,5 +32,8 @@
     "tsx": "^4.19.3",
     "typescript": "^5.8.2"
   },
-  "workspaces": ["packages/*"]
+  "workspaces": ["packages/*"],
+  "volta": {
+    "node": "23.10.0"
+  }
 }
