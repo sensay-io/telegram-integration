@@ -1,46 +1,39 @@
 {
-  "name": "telegram",
-  "version": "1.0.0",
-  "description": "service to manage discord bots",
-  "main": "dist/index.js",
+  "name": "@sensay/telegram",
   "type": "module",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "author": "Sensay",
+  "description": "Sensay Telegram integration",
+  "keywords": ["bots", "telegram", "sensay"],
   "scripts": {
-    "build": "tsc",
-    "start": "NODE_ENV=production node dist/index.js",
-    "dev": "NODE_ENV=development nodemon"
+    "build": "npm run build:bot && npm run build:orc",
+    "build:bot": "npm run build -w packages/bot",
+    "build:orc": "npm run build -w packages/orchestrator",
+    "start": "npm run start -ws --if-present",
+    "dev:bot": "npm run dev -w packages/bot",
+    "dev:orc": "npm run build && npm run dev -w packages/orchestrator",
+    "test": "npm run test -ws --if-present",
+    "lint": "biome lint --diagnostic-level=warn",
+    "lint:write": "biome lint --diagnostic-level=warn --write",
+    "check": "biome check --diagnostic-level=warn",
+    "check:write": "biome check --diagnostic-level=warn --write"
   },
-  "keywords": [
-    "bots",
-    "telegram",
-    "sensay"
-  ],
-  "author": "sensay",
-  "license": "ISC",
+  "engines": {
+    "node": ">=22.13.11"
+  },
   "lint-staged": {
     "*.{js,ts,json}": "biome check --write src"
   },
-  "dependencies": {
-    "@ai-sdk/openai": "^1.2.7",
-    "@grammyjs/auto-chat-action": "^0.1.1",
-    "@grammyjs/files": "^1.1.1",
-    "@grammyjs/ratelimiter": "^1.2.1",
-    "@grammyjs/transformer-throttler": "^1.2.1",
-    "@types/jsonwebtoken": "^9.0.9",
-    "ai": "^4.1.64",
-    "common-tags": "^1.8.2",
-    "dotenv": "^16.4.7",
-    "elevenlabs": "^1.54.0",
-    "grammy": "^1.35.0",
-    "jsonwebtoken": "^9.0.2",
-    "remove-markdown": "^0.6.0"
-  },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
-    "@types/common-tags": "^1.8.4",
-    "@types/node": "^20.10.0",
-    "lint-staged": "^15.4.3",
-    "nodemon": "^3.0.1",
+    "@types/node": "^22.13.11",
+    "lint-staged": "^15.5.0",
     "tsx": "^4.19.3",
-    "typescript": "^5.3.2"
+    "typescript": "^5.8.2"
+  },
+  "workspaces": ["packages/*"],
+  "volta": {
+    "node": "23.10.0"
   }
 }

@@ -1,38 +1,16 @@
 {
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    // Enable latest features
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "target": "ES2022",
-    "module": "esnext",
-    "moduleDetection": "force",
-    "allowJs": true,
-
-    // Node.js settings
-    "moduleResolution": "node",
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
-
-    // Output settings
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "sourceMap": true,
-    "declaration": false,
-    "removeComments": true,
-
-    // Best practices
-    "strict": true,
-    "skipLibCheck": true,
-    "noFallthroughCasesInSwitch": true,
-    "forceConsistentCasingInFileNames": true,
-
-    // Some stricter flags (disabled by default)
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "noPropertyAccessFromIndexSignature": false,
-
-    // Types
-    "types": ["node"]
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext"
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "files": [],
+  "references": [
+    {
+      "path": "packages/bot"
+    },
+    {
+      "path": "packages/orchestrator"
+    }
+  ]
 }
