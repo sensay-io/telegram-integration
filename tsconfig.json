@@ -1,38 +1,38 @@
 {
-	"compilerOptions": {
-		// Enable latest features
-		"lib": ["ESNext"],
-		"target": "ES2022",
-		"module": "NodeNext",
-		"moduleDetection": "force",
-		"allowJs": true,
+  "compilerOptions": {
+    // Enable latest features
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "target": "ES2022",
+    "module": "esnext",
+    "moduleDetection": "force",
+    "allowJs": true,
 
-		// Node.js settings
-		"moduleResolution": "NodeNext",
-		"esModuleInterop": true,
-		"resolveJsonModule": true,
+    // Node.js settings
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
 
-		// Output settings
-		"outDir": "./dist",
-		"rootDir": "./src",
-		"sourceMap": true,
-		"declaration": false,
-		"removeComments": true,
+    // Output settings
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "sourceMap": true,
+    "declaration": false,
+    "removeComments": true,
 
-		// Best practices
-		"strict": true,
-		"skipLibCheck": true,
-		"noFallthroughCasesInSwitch": true,
-		"forceConsistentCasingInFileNames": true,
+    // Best practices
+    "strict": true,
+    "skipLibCheck": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
 
-		// Some stricter flags (disabled by default)
-		"noUnusedLocals": false,
-		"noUnusedParameters": false,
-		"noPropertyAccessFromIndexSignature": false,
+    // Some stricter flags (disabled by default)
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noPropertyAccessFromIndexSignature": false,
 
-		// Types
-		"types": ["node"]
-	},
-	"include": ["src/**/*"],
-	"exclude": ["node_modules", "dist"]
+    // Types
+    "types": ["node"]
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

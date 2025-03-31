@@ -1,36 +1,46 @@
 {
-	"name": "telegram",
-	"version": "1.0.0",
-	"description": "service to manage discord bots",
-	"main": "dist/index.js",
-	"type": "module",
-	"scripts": {
-		"build": "tsc",
-		"start": "node dist/index.js",
-		"dev": "nodemon"
-	},
-	"keywords": [
-		"bots",
-		"telegram",
-		"sensay"
-	],
-	"author": "sensay",
-	"license": "ISC",
-	"lint-staged": {
-		"*.{js,ts,json}": "biome check --write src"
-	},
-	"dependencies": {
-		"@types/jsonwebtoken": "^9.0.9",
-		"dotenv": "^16.4.7",
-		"grammy": "^1.35.0",
-		"jsonwebtoken": "^9.0.2"
-	},
-	"devDependencies": {
-		"@biomejs/biome": "^1.9.4",
-		"@types/node": "^20.10.0",
-		"lint-staged": "^15.4.3",
-		"nodemon": "^3.0.1",
-		"tsx": "^4.19.3",
-		"typescript": "^5.3.2"
-	}
+  "name": "telegram",
+  "version": "1.0.0",
+  "description": "service to manage discord bots",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "NODE_ENV=production node dist/index.js",
+    "dev": "NODE_ENV=development nodemon"
+  },
+  "keywords": [
+    "bots",
+    "telegram",
+    "sensay"
+  ],
+  "author": "sensay",
+  "license": "ISC",
+  "lint-staged": {
+    "*.{js,ts,json}": "biome check --write src"
+  },
+  "dependencies": {
+    "@ai-sdk/openai": "^1.2.7",
+    "@grammyjs/auto-chat-action": "^0.1.1",
+    "@grammyjs/files": "^1.1.1",
+    "@grammyjs/ratelimiter": "^1.2.1",
+    "@grammyjs/transformer-throttler": "^1.2.1",
+    "@types/jsonwebtoken": "^9.0.9",
+    "ai": "^4.1.64",
+    "common-tags": "^1.8.2",
+    "dotenv": "^16.4.7",
+    "elevenlabs": "^1.54.0",
+    "grammy": "^1.35.0",
+    "jsonwebtoken": "^9.0.2",
+    "remove-markdown": "^0.6.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/common-tags": "^1.8.4",
+    "@types/node": "^20.10.0",
+    "lint-staged": "^15.4.3",
+    "nodemon": "^3.0.1",
+    "tsx": "^4.19.3",
+    "typescript": "^5.3.2"
+  }
 }
