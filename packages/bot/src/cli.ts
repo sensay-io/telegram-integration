@@ -15,7 +15,7 @@ if (!env.BOT_TOKEN) {
   throw new Error('BOT_TOKEN is not defined')
 }
 
-const bot = new BotClient(env.BOT_TOKEN)
+const bot = new BotClient(env.BOT_TOKEN, env.REPLICA_UUID)
 
 const stopBot = () => {
   bot

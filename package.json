@@ -5,7 +5,11 @@
   "license": "Apache-2.0",
   "author": "Sensay",
   "description": "Sensay Telegram integration",
-  "keywords": ["bots", "telegram", "sensay"],
+  "keywords": [
+    "bots",
+    "telegram",
+    "sensay"
+  ],
   "scripts": {
     "build": "npm run build:bot && npm run build:orc",
     "build:bot": "npm run build -w packages/bot",
@@ -32,8 +36,13 @@
     "tsx": "^4.19.3",
     "typescript": "^5.8.2"
   },
-  "workspaces": ["packages/*"],
+  "workspaces": [
+    "packages/*"
+  ],
   "volta": {
     "node": "23.10.0"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.14.0"
   }
 }

@@ -19,6 +19,7 @@ const envSchema = z
   .extend(commonEnvSchema.shape)
 
 function createConfig() {
+  console.log(process.env, 'process.env')
   const parsed = envSchema.safeParse(process.env)
 
   if (parsed.success) {

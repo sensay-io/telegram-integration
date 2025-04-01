@@ -1,135 +1,128 @@
-import type { AutoChatActionFlavor } from "@grammyjs/auto-chat-action";
-import type { FileFlavor } from "@grammyjs/files";
-import type { Context, RawApi } from "grammy";
-import type { Other as OtherApi } from "grammy/out/core/api.js";
+import type { AutoChatActionFlavor } from '@grammyjs/auto-chat-action'
+import type { FileFlavor } from '@grammyjs/files'
+import type { Context, RawApi } from 'grammy'
+import type { Other as OtherApi } from 'grammy/out/core/api.js'
 
-import { openai } from "@ai-sdk/openai";
-import { type LanguageModelUsage, generateObject } from "ai";
-import { codeBlock } from "common-tags";
-import type { Methods } from "grammy/out/core/client.js";
-import { z } from "zod";
+import { openai } from '@ai-sdk/openai'
+import { type LanguageModelUsage, generateObject } from 'ai'
+import { codeBlock } from 'common-tags'
+import type { Methods } from 'grammy/out/core/client.js'
+import { z } from 'zod'
 
-export function removeMentionIfNeeded(
-  text: string,
-  mention: string,
-  reply?: boolean,
-) {
-  let messageText = text;
+export function removeMentionIfNeeded(text: string, mention: string, reply?: boolean) {
+  let messageText = text
 
-  const mentionWithSymbol = `@${mention}`;
+  const mentionWithSymbol = `@${mention}`
 
   if (mentionWithSymbol) {
-    const regex = new RegExp(mention, "g");
-    return messageText.replace(regex, "").trim();
+    const regex = new RegExp(mention, 'g')
+    return messageText.replace(regex, '').trim()
   }
 
-  if (!reply) messageText = messageText.split(" ").slice(1).join(" ");
+  if (!reply) messageText = messageText.split(' ').slice(1).join(' ')
 
-  return messageText;
+  return messageText
 }
 
 export const requiresReply = (chat: ParsedTelegramChat, mention: string) => {
-  if (!chat.reply) return false;
+  if (!chat.reply) return false
 
-  const hasReplyContent = !!(
-    chat.reply.text ||
-    chat.reply.voice ||
-    chat.reply.caption
-  );
+  const hasReplyContent = !!(chat.reply.text || chat.reply.voice || chat.reply.caption)
 
-  const isReplyFromMentionedUser = chat.reply.from === mention;
+  const isReplyFromMentionedUser = chat.reply.from === mention
 
-  return hasReplyContent && isReplyFromMentionedUser;
-};
-
-export async function isPlanValid(overridePlan: boolean, userId: string) {
-  if (overridePlan) return true;
-
-  // const isAllowed = await isAllowedToUseFeature({ userId }, 'Telegram Copilot')
-  return true;
+  return hasReplyContent && isReplyFromMentionedUser
 }
 
-export type ReplyParameterType<
-  M extends Methods<RawApi>,
-  X extends string = never,
-> = OtherApi<RawApi, M, X>;
+//ignore for now
+export async function isPlanValid(overridePlan: boolean, userId: string) {
+  if (overridePlan) return true
+
+  // const isAllowed = await isAllowedToUseFeature({ userId }, 'Telegram Copilot')
+  return true
+}
+
+export type ReplyParameterType<M extends Methods<RawApi>, X extends string = never> = OtherApi<
+  RawApi,
+  M,
+  X
+>
 
 export function getReplyParameters(
-  chatType: "group" | "private",
+  chatType: 'group' | 'private',
   parameters: {
-    needsReply: boolean;
-    messageId: number;
-    messageThreadId: number | undefined;
-    chatId: number;
-    isTopicMessage: boolean | undefined;
+    needsReply: boolean
+    messageId: number
+    messageThreadId: number | undefined
+    chatId: number
+    isTopicMessage: boolean | undefined
   },
-): ReplyParameterType<"sendMessage", "chat_id" | "text"> {
-  const { messageId, messageThreadId, chatId, needsReply } = parameters;
+): ReplyParameterType<'sendMessage', 'chat_id' | 'text'> {
+  const { messageId, messageThreadId, chatId, needsReply } = parameters
 
   if (needsReply) {
     return {
       reply_parameters: { chat_id: chatId, message_id: messageId },
-      parse_mode: "Markdown",
-    };
+      parse_mode: 'Markdown',
+    }
   }
 
-  if (chatType === "group" && parameters.isTopicMessage)
-    return { message_thread_id: messageThreadId, parse_mode: "Markdown" };
+  if (chatType === 'group' && parameters.isTopicMessage)
+    return { message_thread_id: messageThreadId, parse_mode: 'Markdown' }
 
-  return { parse_mode: "Markdown" };
+  return { parse_mode: 'Markdown' }
 }
 
 function escapeMarkdown(text: string): string {
   const specialChars = [
-    "*",
-    "[",
-    "]",
-    "(",
-    ")",
-    "~",
-    "`",
-    ">",
-    "#",
-    "+",
-    "-",
-    "=",
-    "|",
-    "{",
-    "}",
-    ".",
-    "!",
-  ];
+    '*',
+    '[',
+    ']',
+    '(',
+    ')',
+    '~',
+    '`',
+    '>',
+    '#',
+    '+',
+    '-',
+    '=',
+    '|',
+    '{',
+    '}',
+    '.',
+    '!',
+  ]
   // biome-ignore lint: i need backticks to use \ without prettier deleting it
-  const escapedText = text.replace(/_/g, `\\_`);
+  const escapedText = text.replace(/_/g, `\\_`)
 
   return specialChars.reduce((escapedText, char) => {
     // biome-ignore lint: i need backticks to use \ without prettier deleting it
-    const regex = new RegExp(`\${char}`, "g");
-    return escapedText.replace(regex, `\\${char}`);
-  }, escapedText);
+    const regex = new RegExp(`\${char}`, 'g')
+    return escapedText.replace(regex, `\\${char}`)
+  }, escapedText)
 }
 
 export async function ctxReply(
   message: string,
   ctx: FileFlavor<Context & AutoChatActionFlavor>,
-  replyParameters?: ReplyParameterType<"sendMessage", "text" | "chat_id">,
+  replyParameters?: ReplyParameterType<'sendMessage', 'text' | 'chat_id'>,
 ) {
-  return await ctx.reply(escapeMarkdown(message), replyParameters);
+  return await ctx.reply(escapeMarkdown(message), replyParameters)
 }
 
 export function calculateTokenCost(tokenUsage: LanguageModelUsage) {
-  const { promptTokens, completionTokens } = tokenUsage;
+  const { promptTokens, completionTokens } = tokenUsage
 
-  const promptCostPerMillion = 5.0;
-  const completionCostPerMillion = 15.0;
+  const promptCostPerMillion = 5.0
+  const completionCostPerMillion = 15.0
 
-  const costForPromptTokens = (promptTokens / 1000000) * promptCostPerMillion;
-  const costForCompletionTokens =
-    (completionTokens / 1000000) * completionCostPerMillion;
+  const costForPromptTokens = (promptTokens / 1000000) * promptCostPerMillion
+  const costForCompletionTokens = (completionTokens / 1000000) * completionCostPerMillion
 
-  const totalCost = costForPromptTokens + costForCompletionTokens;
+  const totalCost = costForPromptTokens + costForCompletionTokens
 
-  return totalCost;
+  return totalCost
 }
 
 export async function isUserAskingForSnsyTokenOrVoiceRecording(input: string) {
@@ -158,35 +151,33 @@ Examples:
 - If they say "what is the price of the car" you will return '{"voice":false, "token":false}'.
 - If they say "what's the price of the SNSY token" you will return '{"voice":false, "token":true}'.
 - If they say "hey OpenAI, send me a voice message with the price of the SNSY token" you will return '{"voice":true, "token":true}'.
- `;
+ `
 
   const schema = z.object({
     token: z.boolean(),
     voice: z.boolean(),
-  });
+  })
 
   const {
     object,
     usage,
   }: { object: { token: boolean; voice: boolean }; usage: LanguageModelUsage } =
     await generateObject({
-      model: openai("gpt-4o-mini"),
+      model: openai('gpt-4o-mini'),
       system: personaSystemMessage,
       prompt: input,
       schema,
       temperature: 0.4,
       maxTokens: 250,
-      mode: "json",
-    });
+      mode: 'json',
+    })
 
-  return { ...object, usage: usage };
+  return { ...object, usage: usage }
 }
 
-import type { Message, Update } from "@grammyjs/types";
+import type { Message, Update } from '@grammyjs/types'
 
-export function parse(
-  message: Message & Update.NonChannel,
-): ParsedTelegramChat {
+export function parse(message: Message & Update.NonChannel): ParsedTelegramChat {
   const reply = message.reply_to_message
     ? {
         text: message.reply_to_message.text,
@@ -194,7 +185,7 @@ export function parse(
         voice: !!message.reply_to_message.voice,
         caption: message.reply_to_message.caption,
       }
-    : undefined;
+    : undefined
 
   return {
     first_name: message.from.first_name,
@@ -206,24 +197,24 @@ export function parse(
     chat_id: message.chat.id,
     type: message.chat.type,
     reply,
-  };
+  }
 }
 
 export type ParsedTelegramChat = {
-  first_name: string;
-  last_name?: string;
-  username?: string;
-  is_bot: boolean | null;
-  user_id: number | null;
-  message_id: number;
-  chat_id: number;
-  type: string;
+  first_name: string
+  last_name?: string
+  username?: string
+  is_bot: boolean | null
+  user_id: number | null
+  message_id: number
+  chat_id: number
+  type: string
   reply:
     | {
-        text: string | undefined;
-        from: string | undefined;
-        voice: boolean | undefined;
-        caption: string | undefined;
+        text: string | undefined
+        from: string | undefined
+        voice: boolean | undefined
+        caption: string | undefined
       }
-    | undefined;
-};
+    | undefined
+}

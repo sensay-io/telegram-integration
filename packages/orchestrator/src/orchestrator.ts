@@ -185,11 +185,11 @@ export class Orchestrator {
         {
           replicaUUID: replica.uuid,
           replicaSlug: replica.slug,
-          token: new SensitiveString(replica.telegram_integration.token),
+          token: new SensitiveString(replica.telegram_integration?.token ?? ''),
         } satisfies BotDefinition,
       ]
     })
-
+    console.log(new Map(botsDefinitions), 'new Map(botsDefinitions)')
     return new Map(botsDefinitions)
   }
 }

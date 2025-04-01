@@ -36,9 +36,29 @@ const ReplicaSchema = z.object({
   uuid: ReplicaUUIDSchema,
   name: z.string(),
   slug: z.string(),
-  telegram_integration: z.object({
-    token: z.string(),
-  }),
+  profile_image: z.string(),
+  short_description: z.string(),
+  introduction: z.string(),
+  tags: z.array(z.string()),
+  created_at: z.string(),
+  owner_uuid: z.string(),
+  voice_enabled: z.boolean(),
+  video_enabled: z.boolean(),
+  chat_history_count: z.number(),
+  system_message: z.string(),
+  telegram_service_name: z.string().nullable(),
+  discord_service_name: z.string().nullable(),
+  discord_is_active: z.boolean().nullable(),
+  telegram_integration: z
+    .object({
+      token: z.string(),
+    })
+    .nullable(),
+  discord_integration: z
+    .object({
+      token: z.string(),
+    })
+    .nullable(),
 })
 
 export type Replica = z.infer<typeof ReplicaSchema>
@@ -62,12 +82,10 @@ export class SensayAPIClient implements SensayAPI {
     private readonly apiKey: string,
   ) {}
 
-  async getReplicas({ intergration }: GetReplicasParams): Promise<Replica[]> {
+  async getReplicas(): Promise<Replica[]> {
     const url = new URL(`${this.baseURL}/v1/replicas`)
 
-    if (intergration) {
-      url.searchParams.set('intergrations', intergration.toString())
-    }
+    url.searchParams.set('integration', 'telegram')
 
     const response = await this.get(
       url,
@@ -83,6 +101,7 @@ export class SensayAPIClient implements SensayAPI {
     url: URL,
     responseSchema: z.ZodObject<TSchema>,
   ): Promise<z.infer<typeof responseSchema> | null> {
+    console.log('url', url)
     const response = await fetch(url, {
       headers: {
         'Content-Type': 'application/json',
@@ -96,9 +115,9 @@ export class SensayAPIClient implements SensayAPI {
       throw new SensayAPIError({ message: response.statusText, response })
     }
 
-    const parsedResponse = createSensayAPIReponseSchema(responseSchema).safeParse(
-      await response.json(),
-    )
+    const replicas = await response.json()
+
+    const parsedResponse = createSensayAPIReponseSchema(responseSchema).safeParse(replicas)
 
     if (!parsedResponse.success) {
       throw parsedResponse.error
@@ -119,9 +138,23 @@ const generateFakeReplicas = (count: number) => {
     uuid: `fake-replica-${i + 1}`,
     name: `Replica ${i + 1}`,
     slug: `replica-${i + 1}`,
+    profile_image: `https://example.com/image-${i + 1}.jpg`,
+    short_description: 'A test replica',
+    introduction: 'This is a test replica',
+    tags: ['test'],
+    created_at: new Date().toISOString(),
+    owner_uuid: `owner-${i + 1}`,
+    voice_enabled: false,
+    video_enabled: false,
+    chat_history_count: 0,
+    system_message: 'Test system message',
+    telegram_service_name: 'test-service',
+    discord_service_name: null,
+    discord_is_active: null,
     telegram_integration: {
       token: `test-${i + 1}`,
     },
+    discord_integration: null,
   }))
 }
 
