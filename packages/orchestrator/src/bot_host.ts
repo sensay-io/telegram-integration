@@ -1,10 +1,11 @@
 import cluster from 'node:cluster'
 import type { BotDefinition } from './bot_definition'
 import { BotIPCChannel } from './bot_ipc_channel'
+import { config as clusterConfig } from './config/cluster'
 import type { Env } from './config/worker'
 import { traceAll } from './logging/decorators'
-import type { Logger, LoggerLevel } from './logging/logger'
-import { Signal, process } from './types/process'
+import type { Logger } from './logging/logger'
+import { Signal } from './types/process'
 import { type TypedWorker, WorkerEvent, type WorkerEventMap } from './types/worker'
 import { chaosTest } from './utils/chaos'
 import { withTimeout } from './utils/timer'
@@ -53,8 +54,11 @@ export class BotHost {
       BOT_TOKEN: botDefinition.token.getSensitiveValue(),
       REPLICA_UUID: botDefinition.replicaUUID,
       REPLICA_SLUG: botDefinition.replicaSlug,
-      NODE_ENV: process.env.NODE_ENV,
-      LOG_LEVEL: process.env.LOG_LEVEL as LoggerLevel,
+      NODE_ENV: clusterConfig.NODE_ENV,
+      LOG_LEVEL: clusterConfig.LOG_LEVEL,
+      API_BASE_URL: clusterConfig.SENSAY_API_URL,
+      SENSAY_ORGANIZATION_SECRET: clusterConfig.SENSAY_API_KEY.getSensitiveValue(),
+      VERCEL_PROTECTION_BYPASS_KEY: clusterConfig.VERCEL_PROTECTION_BYPASS_KEY.getSensitiveValue(),
     } satisfies Omit<Env, 'BOT_TOKEN'> & { BOT_TOKEN: string })
 
     const ipcChannel = new BotIPCChannel(botDefinition, worker, logger)

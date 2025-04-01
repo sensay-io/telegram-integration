@@ -9,6 +9,9 @@ const envSchema = z
     BOT_TOKEN: SensitiveStringSchema,
     REPLICA_UUID: z.string(),
     REPLICA_SLUG: z.string().optional(),
+    API_BASE_URL: z.string(),
+    SENSAY_ORGANIZATION_SECRET: z.string(),
+    VERCEL_PROTECTION_BYPASS_KEY: z.string(),
   })
   .extend(commonEnvSchema.shape)
 

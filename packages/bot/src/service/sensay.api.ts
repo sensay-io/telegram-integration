@@ -86,6 +86,15 @@ export async function saveTelegramMessage(
     body: JSON.stringify(request),
   })
 
+  const responseMessageJson = (await response.json()) as {
+    error?: string
+    message?: string
+  }
+
+  if (!response.ok || responseMessageJson.error) {
+    throw new Error(responseMessageJson.error || responseMessageJson.message)
+  }
+
   return await response.json()
 }
 
