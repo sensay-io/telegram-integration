@@ -40,8 +40,8 @@ export class BotWorker {
     this.ipcChannel.sendReadyEvent()
   }
 
-  start() {
-    this.botClient.start()
+  async start() {
+    await this.botClient.start()
   }
 
   async stop() {

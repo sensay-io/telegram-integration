@@ -101,7 +101,6 @@ export class SensayAPIClient implements SensayAPI {
     url: URL,
     responseSchema: z.ZodObject<TSchema>,
   ): Promise<z.infer<typeof responseSchema> | null> {
-    console.log('url', url)
     const response = await fetch(url, {
       headers: {
         'Content-Type': 'application/json',
@@ -158,7 +157,7 @@ const generateFakeReplicas = (count: number) => {
   }))
 }
 
-const fakeReplicas = generateFakeReplicas(10)
+const fakeReplicas = generateFakeReplicas(3)
 
 export class FakeSensayAPIClient implements SensayAPI {
   private readonly replicas: Replica[]

@@ -61,7 +61,7 @@ const shutdown = (reason: Signal) => {
 }
 
 const api =
-  config.isTesting || config.isDevelopment || config.isChaos
+  config.isTesting || config.isChaos
     ? new FakeSensayAPIClient()
     : new SensayAPIClient(config.SENSAY_API_URL, config.SENSAY_API_KEY.getSensitiveValue())
 

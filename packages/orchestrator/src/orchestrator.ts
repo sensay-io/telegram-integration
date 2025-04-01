@@ -189,7 +189,6 @@ export class Orchestrator {
         } satisfies BotDefinition,
       ]
     })
-    console.log(new Map(botsDefinitions), 'new Map(botsDefinitions)')
     return new Map(botsDefinitions)
   }
 }

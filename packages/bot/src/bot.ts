@@ -1,12 +1,12 @@
-import { Bot, type Context, type Api, type RawApi } from 'grammy'
-import { type FileFlavor, hydrateFiles } from '@grammyjs/files'
-import { apiThrottler } from '@grammyjs/transformer-throttler'
-import { limit } from '@grammyjs/ratelimiter'
 import { type AutoChatActionFlavor, autoChatAction } from '@grammyjs/auto-chat-action'
+import { type FileFlavor, hydrateFiles } from '@grammyjs/files'
+import { limit } from '@grammyjs/ratelimiter'
+import { apiThrottler } from '@grammyjs/transformer-throttler'
+import { type Api, Bot, type Context, type RawApi } from 'grammy'
+import { botActions } from './bot-actions'
 import { requiresReply } from './helpers'
 import { parse } from './helpers'
 import { saveTelegramMessage } from './service/sensay.api'
-import { botActions } from './bot-actions'
 
 type MyContext = FileFlavor<Context & AutoChatActionFlavor>
 type MyBot = Bot<MyContext, Api<RawApi>>
@@ -42,7 +42,9 @@ export class BotClient {
     return this.bot.isInited() && this.bot.isRunning()
   }
 
-  start() {
+  async start() {
+    await this.bot.init()
+
     // Save message on database and dont respond
     this.bot.on('message', async (ctx, next) => {
       const parsedChat = parse(ctx.message)

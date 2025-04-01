@@ -66,4 +66,4 @@ process.on(Event.UNHANDLED_REJECTION, (error) => {
   process.exit(1)
 })
 
-botWorker.start()
+await botWorker.start()

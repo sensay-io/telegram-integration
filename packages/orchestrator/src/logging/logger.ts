@@ -27,12 +27,7 @@ export class Logger {
         messageFormat: (log, messageKey) => {
           const message = log[messageKey]
           const module = log.module
-          const bot = log.bot
           if (module) {
-            if (bot) {
-              return `[${module}] [${bot}] ${message}`
-            }
-
             return `[${module}] ${message}`
           }
 

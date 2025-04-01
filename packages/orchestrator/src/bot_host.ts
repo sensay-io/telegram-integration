@@ -56,7 +56,6 @@ export class BotHost {
       NODE_ENV: process.env.NODE_ENV,
       LOG_LEVEL: process.env.LOG_LEVEL as LoggerLevel,
     } satisfies Omit<Env, 'BOT_TOKEN'> & { BOT_TOKEN: string })
-    console.log(worker, 'worker')
 
     const ipcChannel = new BotIPCChannel(botDefinition, worker, logger)
     await ipcChannel.waitForReadyEvent(config.healthCheckTimeoutMs)
