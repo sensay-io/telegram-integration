@@ -1,10 +1,12 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "baseUrl": "./",
     "rootDir": "src",
     "outDir": "dist",
+    "types": ["node"],
     "paths": {
-      "@sensay/*": ["./packages/*"]
+      "@/*": ["./src/*"]
     }
   },
   "references": [
