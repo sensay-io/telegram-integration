@@ -100,7 +100,7 @@ export class Orchestrator {
   }
 
   async updateBot(
-    botDefinitionUpdate: Pick<BotDefinition, 'replicaUUID'> & Partial<BotDefinition>,
+    botDefinitionUpdate: Pick<BotDefinition, 'replicaUUID' | 'ownerUuid'> & Partial<BotDefinition>,
   ): Promise<
     | BotCRUDOperationResult.Created
     | BotCRUDOperationResult.Updated
@@ -186,6 +186,7 @@ export class Orchestrator {
           replicaUUID: replica.uuid,
           replicaSlug: replica.slug,
           token: new SensitiveString(replica.telegram_integration?.token ?? ''),
+          ownerUuid: replica.owner_uuid,
         } satisfies BotDefinition,
       ]
     })

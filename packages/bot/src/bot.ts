@@ -1,12 +1,11 @@
-import { type AutoChatActionFlavor, autoChatAction } from '@grammyjs/auto-chat-action'
-import { type FileFlavor, hydrateFiles } from '@grammyjs/files'
-import { limit } from '@grammyjs/ratelimiter'
-import { apiThrottler } from '@grammyjs/transformer-throttler'
-import { type Api, Bot, type Context, type RawApi } from 'grammy'
+import type { AutoChatActionFlavor } from '@grammyjs/auto-chat-action'
+import type { FileFlavor } from '@grammyjs/files'
+import type { Api, Bot, Context, RawApi } from 'grammy'
 import { botActions } from './bot-actions'
-import { requiresReply } from './helpers'
+import { hasUserRepliedToReplica } from './helpers'
 import { parse } from './helpers'
-import { saveTelegramMessage } from './service/sensay.api'
+import { saveTelegramMessage, checkAndCreateUser } from './service/sensay.api'
+import { initTelegramBot } from './bot-actions'
 
 type MyContext = FileFlavor<Context & AutoChatActionFlavor>
 type MyBot = Bot<MyContext, Api<RawApi>>
@@ -14,28 +13,12 @@ type MyBot = Bot<MyContext, Api<RawApi>>
 export class BotClient {
   private readonly bot: MyBot
   private readonly replicaUuid: string
+  private readonly ownerUuid: string
 
-  constructor(botToken: string, replicaUuid: string) {
+  constructor(botToken: string, replicaUuid: string, ownerUuid: string) {
     this.replicaUuid = replicaUuid
-    this.bot = new Bot<MyContext>(botToken)
-    const throttler = apiThrottler()
-
-    this.bot.api.config.use(hydrateFiles(this.bot.token))
-    this.bot.use(autoChatAction())
-    this.bot.api.config.use(throttler)
-    this.bot.use(
-      limit({
-        timeFrame: 10000,
-        limit: 2,
-        onLimitExceeded: (ctx) => {
-          ctx?.reply('Please refrain from sending too many requests!')
-        },
-
-        keyGenerator: (ctx) => {
-          return ctx.from?.id.toString()
-        },
-      }),
-    )
+    this.ownerUuid = ownerUuid
+    this.bot = initTelegramBot(botToken)
   }
 
   isHealthy() {
@@ -45,15 +28,21 @@ export class BotClient {
   async start() {
     await this.bot.init()
 
-    // Save message on database and dont respond
     this.bot.on('message', async (ctx, next) => {
       const parsedChat = parse(ctx.message)
       if (parsedChat.is_bot) return
       if (!ctx.message.text) return
 
-      const needsReply = requiresReply(parsedChat, ctx.me.username)
+      await checkAndCreateUser(ctx.from?.id.toString() || '')
 
-      if (!needsReply) {
+      const isReplicaTagged = ctx.message.text.includes(`@${this.bot.botInfo.username}`)
+      const isPrivateChat = parsedChat.type === 'private'
+
+      const needsReplyByReplica =
+        hasUserRepliedToReplica(parsedChat, ctx.me.username) || isReplicaTagged || isPrivateChat
+
+      // Save message on database and dont respond
+      if (!needsReplyByReplica) {
         await saveTelegramMessage(this.replicaUuid, ctx.from?.id.toString(), {
           content: ctx.message.text,
           skip_chat_history: false,
@@ -77,7 +66,7 @@ export class BotClient {
       botUsername: this.bot.botInfo.username,
       replicaUuid: this.replicaUuid,
       overridePlan: false,
-      ownerUuid: '',
+      ownerUuid: this.ownerUuid,
       elevenlabsId: null,
       needsReply: true,
     })

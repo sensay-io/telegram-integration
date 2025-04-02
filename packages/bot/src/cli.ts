@@ -1,15 +1,6 @@
-import assert from 'node:assert'
 import process from 'node:process'
-import dotenv from 'dotenv'
 import { BotClient } from './bot'
-
-const dotenvOutput = dotenv.config({ path: '.env.local' })
-if (dotenvOutput.error) {
-  throw dotenvOutput.error
-}
-
-assert(dotenvOutput.parsed)
-const env = dotenvOutput.parsed
+import { env } from './env'
 
 if (!env.BOT_TOKEN) {
   throw new Error('BOT_TOKEN is not defined')

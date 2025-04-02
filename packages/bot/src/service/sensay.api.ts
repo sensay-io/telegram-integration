@@ -45,12 +45,11 @@ export async function getTelegramResponse(
   const response = await fetch(`${API_BASE_URL}/v1/replicas/${replicaUuid}/chat/completions`, {
     method: 'POST',
     headers: {
-      Accept: 'text/event-stream',
       'X-ORGANIZATION-SECRET': SENSAY_ORGANIZATION_SECRET!,
       'X-USER-ID': messageAuthorId,
       'X-USER-ID-TYPE': 'telegram',
       // needed for vercel protection in staging
-      'x-vercel-protection-bypass': VERCEL_PROTECTION_BYPASS_KEY!,
+      'x-vercel-protection-bypass': '',
     },
     body: JSON.stringify(request),
   })
@@ -63,9 +62,9 @@ export async function getTelegramResponse(
     throw new Error(responseMessageJson.error || responseMessageJson.message)
   }
 
-  const data = await response.json()
+  const data = (await response.json()) as { content: string; success: boolean }
 
-  return data as string
+  return data.content
 }
 
 export async function saveTelegramMessage(
@@ -115,6 +114,7 @@ export async function checkAndCreateUser(userId: string): Promise<UserData> {
 
     // If the response is successful, the user exists
     if (userResponse.ok) {
+      console.log('User exists')
       return (await userResponse.json()) as UserData
     }
 
@@ -142,6 +142,8 @@ export async function checkAndCreateUser(userId: string): Promise<UserData> {
         const errorData = (await createResponse.json()) as ErrorResponse
         throw new Error(errorData.error || errorData.message || 'Failed to create user')
       }
+
+      console.log('User created')
 
       return (await createResponse.json()) as UserData
     }

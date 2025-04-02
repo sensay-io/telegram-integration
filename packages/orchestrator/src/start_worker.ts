@@ -30,9 +30,14 @@ const botDefinition = {
   token: config.BOT_TOKEN,
   replicaUUID: config.REPLICA_UUID,
   replicaSlug: config.REPLICA_SLUG,
+  ownerUuid: config.OWNER_UUID,
 } satisfies BotDefinition
 
-const botClient = new BotClient(botDefinition.token.getSensitiveValue(), botDefinition.replicaUUID)
+const botClient = new BotClient(
+  botDefinition.token.getSensitiveValue(),
+  botDefinition.replicaUUID,
+  botDefinition.ownerUuid,
+)
 
 if (!config.isProduction && botDefinition.token.getSensitiveValue().startsWith('test')) {
   logger.trace('Configuring test bot')

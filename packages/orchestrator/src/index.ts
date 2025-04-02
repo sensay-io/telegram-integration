@@ -16,7 +16,7 @@ if (!cluster.isPrimary) {
 }
 
 cluster.setupPrimary({
-  exec: path.resolve(import.meta.dirname, 'start_worker.js'),
+  exec: path.resolve(import.meta.dirname, '../dist/start_worker.js'),
 })
 
 process.on(Signal.SIGINT, () => shutdown(Signal.SIGINT))

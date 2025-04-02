@@ -8,7 +8,7 @@ import {
   ctxReply,
   isPlanValid,
   removeMentionIfNeeded,
-  requiresReply,
+  hasUserRepliedToReplica,
   type ParsedTelegramChat,
   getReplyParameters,
   parse,
@@ -16,7 +16,7 @@ import {
 } from './helpers.js'
 import { sendError, sendMessage } from './responses.js'
 import { sendVoiceRecording } from './responses.js'
-import { getTelegramResponse } from './service/sensay.api.js'
+
 export function initTelegramBot(token: string) {
   const bot = new Bot<FileFlavor<Context & AutoChatActionFlavor>>(token)
 
@@ -64,115 +64,116 @@ export const botActions = ({
   needsReply,
   elevenlabsId,
 }: HandleTelegramBotArgs) => {
-  bot.on('message:photo', async (ctx) => {
-    const parsedChat = parse(ctx.message)
-    if (parsedChat.is_bot) return
+  // We need vision from the api to process photos
+  // bot.on('message:photo', async (ctx) => {
+  //   const parsedChat = parse(ctx.message)
+  //   if (parsedChat.is_bot) return
 
-    const caption = ctx.message.caption
-    const isPrivateChat = parsedChat.type === 'private'
-    const isBotMentioned = caption?.includes(`@${botUsername}`)
-    const isTopicMessage = ctx.message.is_topic_message
+  //   const caption = ctx.message.caption
+  //   const isPrivateChat = parsedChat.type === 'private'
+  //   const isBotMentioned = caption?.includes(`@${botUsername}`)
+  //   const isTopicMessage = ctx.message.is_topic_message
 
-    if (!parsedChat.chat_id) {
-      await ctxReply(
-        `Chat id is null Error Id:${captureException(new Error('chat_id is null'))}`,
-        ctx,
-      )
-      return
-    }
+  //   if (!parsedChat.chat_id) {
+  //     await ctxReply(
+  //       `Chat id is null Error Id:${captureException(new Error('chat_id is null'))}`,
+  //       ctx,
+  //     )
+  //     return
+  //   }
 
-    if (!parsedChat.message_id) {
-      await ctxReply(
-        `Message id is null Error Id:${captureException(new Error('chat_id is null'))}`,
-        ctx,
-      )
-      return
-    }
+  //   if (!parsedChat.message_id) {
+  //     await ctxReply(
+  //       `Message id is null Error Id:${captureException(new Error('chat_id is null'))}`,
+  //       ctx,
+  //     )
+  //     return
+  //   }
 
-    if (!isBotMentioned && !needsReply && !isPrivateChat) return
+  //   if (!isBotMentioned && !needsReply && !isPrivateChat) return
 
-    ctx.chatAction = 'typing'
+  //   ctx.chatAction = 'typing'
 
-    const messageThreadId = ctx?.message?.message_thread_id
-    const replyParameters = getReplyParameters('private', {
-      needsReply,
-      messageId: parsedChat.message_id,
-      messageThreadId,
-      isTopicMessage,
-      chatId: parsedChat.chat_id,
-    })
+  //   const messageThreadId = ctx?.message?.message_thread_id
+  //   const replyParameters = getReplyParameters('private', {
+  //     needsReply,
+  //     messageId: parsedChat.message_id,
+  //     messageThreadId,
+  //     isTopicMessage,
+  //     chatId: parsedChat.chat_id,
+  //   })
 
-    try {
-      if (!caption) {
-        await sendError({
-          message: 'Caption is empty, please provide a message.',
-          needsReply,
-          messageId: parsedChat.message_id,
-          chatId: parsedChat.chat_id,
-          messageThreadId,
-          isTopicMessage,
-          ctx,
-          disableErrorCapture: true,
-        })
-        return
-      }
+  //   try {
+  //     if (!caption) {
+  //       await sendError({
+  //         message: 'Caption is empty, please provide a message.',
+  //         needsReply,
+  //         messageId: parsedChat.message_id,
+  //         chatId: parsedChat.chat_id,
+  //         messageThreadId,
+  //         isTopicMessage,
+  //         ctx,
+  //         disableErrorCapture: true,
+  //       })
+  //       return
+  //     }
 
-      // we need vision here on the API
-      const fileUrl = (await ctx.getFile()).getUrl()
-      if (isPrivateChat) {
-        const text = await getTelegramResponse(replicaUuid, caption, {
-          content: '',
-          source: '',
-          skip_chat_history: false,
-          telegram_data: {
-            chat_type: '',
-            chat_id: '',
-            user_id: '',
-            username: '',
-            message_id: '',
-            message_thread_id: '',
-          },
-        })
+  //     // we need vision here on the API
+  //     const fileUrl = (await ctx.getFile()).getUrl()
+  //     if (isPrivateChat) {
+  //       const text = await getTelegramResponse(replicaUuid, caption, {
+  //         content: '',
+  //         source: '',
+  //         skip_chat_history: false,
+  //         telegram_data: {
+  //           chat_type: '',
+  //           chat_id: '',
+  //           user_id: '',
+  //           username: '',
+  //           message_id: '',
+  //           message_thread_id: '',
+  //         },
+  //       })
 
-        await ctxReply(text, ctx, replyParameters)
-        return
-      }
+  //       await ctxReply(text, ctx, replyParameters)
+  //       return
+  //     }
 
-      const messageText = removeMentionIfNeeded(caption, botUsername, needsReply)
+  //     const messageText = removeMentionIfNeeded(caption, botUsername, needsReply)
 
-      let text = await getTelegramResponse(replicaUuid, messageText, {
-        content: '',
-        source: '',
-        skip_chat_history: false,
-        telegram_data: {
-          chat_type: '',
-          chat_id: '',
-          user_id: '',
-          username: '',
-          message_id: '',
-          message_thread_id: '',
-        },
-      })
+  //     let text = await getTelegramResponse(replicaUuid, messageText, {
+  //       content: '',
+  //       source: '',
+  //       skip_chat_history: false,
+  //       telegram_data: {
+  //         chat_type: '',
+  //         chat_id: '',
+  //         user_id: '',
+  //         username: '',
+  //         message_id: '',
+  //         message_thread_id: '',
+  //       },
+  //     })
 
-      const mentionName = `@${parsedChat.username}`
-      if (botUsername && !needsReply) text = `${mentionName} ${text}`
+  //     const mentionName = `@${parsedChat.username}`
+  //     if (botUsername && !needsReply) text = `${mentionName} ${text}`
 
-      await ctxReply(text, ctx, replyParameters)
-    } catch (error) {
-      await sendError({
-        message: 'An error occurred, please contact Sensay with the error id.',
-        needsReply,
-        messageId: parsedChat.message_id,
-        chatId: parsedChat.chat_id,
-        isTopicMessage,
-        messageThreadId,
-        ctx,
-        error,
-      })
+  //     await ctxReply(text, ctx, replyParameters)
+  //   } catch (error) {
+  //     await sendError({
+  //       message: 'An error occurred, please contact Sensay with the error id.',
+  //       needsReply,
+  //       messageId: parsedChat.message_id,
+  //       chatId: parsedChat.chat_id,
+  //       isTopicMessage,
+  //       messageThreadId,
+  //       ctx,
+  //       error,
+  //     })
 
-      return
-    }
-  })
+  //     return
+  //   }
+  // })
 
   bot.on('message::mention', async (ctx) => {
     const messageThreadId = ctx.message.message_thread_id
@@ -308,7 +309,7 @@ export async function replyToPrivateMessage({
   elevenlabsId,
   ctx,
 }: ReplyToPrivateMessageArgs) {
-  const needsReply = requiresReply(parsedChat, botUsername)
+  const needsReply = hasUserRepliedToReplica(parsedChat, botUsername)
 
   ctx.chatAction = 'typing'
 
@@ -371,7 +372,7 @@ export async function replyToPrivateMessage({
     })
     return
   } catch (err) {
-    const needsReply = requiresReply(parsedChat, botUsername)
+    const needsReply = hasUserRepliedToReplica(parsedChat, botUsername)
     if (err instanceof Error) {
       await sendError({
         message: err.message,
@@ -423,7 +424,7 @@ export const publicMessageResponse = async ({
   text,
   elevenlabsId,
 }: ReplyToPublicMessageArgs) => {
-  const needsReply = requiresReply(parsedChat, botUsername)
+  const needsReply = hasUserRepliedToReplica(parsedChat, botUsername)
 
   try {
     if (!text.includes(`@${botUsername}`) && !needsReply) return
@@ -471,8 +472,6 @@ export const publicMessageResponse = async ({
       chatId: parsedChat.chat_id,
       isTopicMessage,
     })
-
-    console.log(replyParameters, 'replyParameters')
 
     const { voice, token, usage } =
       await isUserAskingForSnsyTokenOrVoiceRecording(messageTextWithoutMention)

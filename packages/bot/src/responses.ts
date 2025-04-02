@@ -1,3 +1,5 @@
+import { env } from './env'
+
 import type { AutoChatActionFlavor } from '@grammyjs/auto-chat-action'
 import type { FileFlavor } from '@grammyjs/files'
 import type { LanguageModelUsage } from 'ai'
@@ -47,17 +49,17 @@ export async function sendMessage({
     return
   }
 
-  let fullResponse = await getTelegramResponse(replicaUuid, messageText, {
-    content: '',
-    source: '',
+  let fullResponse = await getTelegramResponse(replicaUuid, ctx.from?.id.toString() || '', {
+    content: messageText,
+    source: 'telegram',
     skip_chat_history: false,
     telegram_data: {
-      chat_type: '',
-      chat_id: '',
-      user_id: '',
-      username: '',
-      message_id: '',
-      message_thread_id: '',
+      chat_type: parsedChat.type,
+      chat_id: parsedChat.chat_id.toString(),
+      user_id: parsedChat.user_id?.toString() || '',
+      username: parsedChat.username || '',
+      message_id: parsedChat.message_id.toString(),
+      message_thread_id: messageThreadId?.toString() || '',
     },
   })
 
@@ -138,7 +140,7 @@ export const sendError = async ({
 
 //ignore for now
 const elevenLabs = new ElevenLabsClient({
-  apiKey: process.env.ELEVENLABS_API_KEY,
+  apiKey: env.ELEVENLABS_API_KEY,
 })
 
 type SendVoiceRecordingArgs = {

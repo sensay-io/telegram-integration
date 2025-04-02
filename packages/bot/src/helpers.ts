@@ -24,7 +24,7 @@ export function removeMentionIfNeeded(text: string, mention: string, reply?: boo
   return messageText
 }
 
-export const requiresReply = (chat: ParsedTelegramChat, mention: string) => {
+export const hasUserRepliedToReplica = (chat: ParsedTelegramChat, mention: string) => {
   if (!chat.reply) return false
 
   const hasReplyContent = !!(chat.reply.text || chat.reply.voice || chat.reply.caption)
@@ -34,8 +34,8 @@ export const requiresReply = (chat: ParsedTelegramChat, mention: string) => {
   return hasReplyContent && isReplyFromMentionedUser
 }
 
-//ignore for now
-export async function isPlanValid(overridePlan: boolean, userId: string) {
+// TODO: check from www the plan
+export function isPlanValid(overridePlan: boolean, userId: string) {
   if (overridePlan) return true
 
   // const isAllowed = await isAllowedToUseFeature({ userId }, 'Telegram Copilot')
