@@ -4,12 +4,8 @@
   "version": "0.1.0",
   "license": "Apache-2.0",
   "author": "Sensay",
-  "keywords": [
-    "bots",
-    "telegram",
-    "sensay"
-  ],
-  "description": "service to manage telegram bots",
+  "keywords": ["bots", "telegram", "sensay"],
+  "description": "A service that uses an orchestrator to manage multiple instances of telegram bots",
   "main": "dist/index.js",
   "bin": {
     "sensay-telegram-bot": "dist/cli.js"

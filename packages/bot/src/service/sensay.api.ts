@@ -1,6 +1,6 @@
 import { env } from 'node:process'
 
-const API_BASE_URL = env.API_BASE_URL
+const SENSAY_API_KEY = env.SENSAY_API_KEY
 const SENSAY_ORGANIZATION_SECRET = env.SENSAY_ORGANIZATION_SECRET
 const VERCEL_PROTECTION_BYPASS_KEY = env.VERCEL_PROTECTION_BYPASS_KEY
 
@@ -42,7 +42,7 @@ export async function getTelegramResponse(
   messageAuthorId: string,
   request: CompletionRequest,
 ) {
-  const response = await fetch(`${API_BASE_URL}/v1/replicas/${replicaUuid}/chat/completions`, {
+  const response = await fetch(`${SENSAY_API_KEY}/v1/replicas/${replicaUuid}/chat/completions`, {
     method: 'POST',
     headers: {
       'X-ORGANIZATION-SECRET': SENSAY_ORGANIZATION_SECRET!,
@@ -72,18 +72,21 @@ export async function saveTelegramMessage(
   messageAuthorId: string,
   request: SaveMessageRequest,
 ) {
-  const response = await fetch(`${API_BASE_URL}/v1/replicas/${replicaUuid}/chat/history/telegram`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-ORGANIZATION-SECRET': SENSAY_ORGANIZATION_SECRET!,
-      'X-USER-ID': messageAuthorId,
-      'X-USER-ID-TYPE': 'telegram',
-      // needed for vercel protection in staging
-      'x-vercel-protection-bypass': VERCEL_PROTECTION_BYPASS_KEY!,
+  const response = await fetch(
+    `${SENSAY_API_KEY}/v1/replicas/${replicaUuid}/chat/history/telegram`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-ORGANIZATION-SECRET': SENSAY_ORGANIZATION_SECRET!,
+        'X-USER-ID': messageAuthorId,
+        'X-USER-ID-TYPE': 'telegram',
+        // needed for vercel protection in staging
+        'x-vercel-protection-bypass': VERCEL_PROTECTION_BYPASS_KEY!,
+      },
+      body: JSON.stringify(request),
     },
-    body: JSON.stringify(request),
-  })
+  )
 
   const responseMessageJson = (await response.json()) as {
     error?: string
@@ -100,7 +103,7 @@ export async function saveTelegramMessage(
 export async function checkAndCreateUser(userId: string): Promise<UserData> {
   try {
     // First, try to get the user using the users/me endpoint
-    const userResponse = await fetch(`${API_BASE_URL}/v1/users/me`, {
+    const userResponse = await fetch(`${SENSAY_API_KEY}/v1/users/me`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -120,7 +123,7 @@ export async function checkAndCreateUser(userId: string): Promise<UserData> {
 
     // If we get a 401 error, the user doesn't exist and we need to create them
     if (userResponse.status === 401) {
-      const createResponse = await fetch(`${API_BASE_URL}/v1/users`, {
+      const createResponse = await fetch(`${SENSAY_API_KEY}/v1/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

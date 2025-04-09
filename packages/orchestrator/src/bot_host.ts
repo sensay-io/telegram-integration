@@ -56,7 +56,7 @@ export class BotHost {
       REPLICA_SLUG: botDefinition.replicaSlug,
       NODE_ENV: clusterConfig.NODE_ENV,
       LOG_LEVEL: clusterConfig.LOG_LEVEL,
-      API_BASE_URL: clusterConfig.SENSAY_API_URL,
+      SENSAY_API_KEY: clusterConfig.SENSAY_API_URL,
       SENSAY_ORGANIZATION_SECRET: clusterConfig.SENSAY_API_KEY.getSensitiveValue(),
       VERCEL_PROTECTION_BYPASS_KEY: clusterConfig.VERCEL_PROTECTION_BYPASS_KEY.getSensitiveValue(),
     } satisfies Omit<Env, 'BOT_TOKEN'> & { BOT_TOKEN: string })

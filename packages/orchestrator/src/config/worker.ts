@@ -10,7 +10,7 @@ const envSchema = z
     REPLICA_UUID: z.string(),
     REPLICA_SLUG: z.string().optional(),
     OWNER_UUID: z.string(),
-    API_BASE_URL: z.string(),
+    SENSAY_API_KEY: z.string(),
     SENSAY_ORGANIZATION_SECRET: z.string(),
     VERCEL_PROTECTION_BYPASS_KEY: z.string(),
   })
