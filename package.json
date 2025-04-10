@@ -43,6 +43,8 @@
     "node": "23.10.0"
   },
   "dependencies": {
+    "@hey-api/client-fetch": "^0.10.0",
+    "@hey-api/openapi-ts": "^0.66.3",
     "@hono/node-server": "^1.14.0"
   }
 }

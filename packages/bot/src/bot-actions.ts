@@ -66,15 +66,15 @@ export const botActions = ({
 }: HandleTelegramBotArgs) => {
   // We need vision from the api to process photos
   // bot.on('message:photo', async (ctx) => {
-  //   const parsedChat = parse(ctx.message)
-  //   if (parsedChat.is_bot) return
+  //   const parsedMessage = parse(ctx.message)
+  //   if (parsedMessage.is_bot) return
 
   //   const caption = ctx.message.caption
-  //   const isPrivateChat = parsedChat.type === 'private'
+  //   const isPrivateChat = parsedMessage.type === 'private'
   //   const isBotMentioned = caption?.includes(`@${botUsername}`)
   //   const isTopicMessage = ctx.message.is_topic_message
 
-  //   if (!parsedChat.chat_id) {
+  //   if (!parsedMessage.chat_id) {
   //     await ctxReply(
   //       `Chat id is null Error Id:${captureException(new Error('chat_id is null'))}`,
   //       ctx,
@@ -82,7 +82,7 @@ export const botActions = ({
   //     return
   //   }
 
-  //   if (!parsedChat.message_id) {
+  //   if (!parsedMessage.message_id) {
   //     await ctxReply(
   //       `Message id is null Error Id:${captureException(new Error('chat_id is null'))}`,
   //       ctx,
@@ -97,10 +97,10 @@ export const botActions = ({
   //   const messageThreadId = ctx?.message?.message_thread_id
   //   const replyParameters = getReplyParameters('private', {
   //     needsReply,
-  //     messageId: parsedChat.message_id,
+  //     messageId: parsedMessage.message_id,
   //     messageThreadId,
   //     isTopicMessage,
-  //     chatId: parsedChat.chat_id,
+  //     chatId: parsedMessage.chat_id,
   //   })
 
   //   try {
@@ -108,8 +108,8 @@ export const botActions = ({
   //       await sendError({
   //         message: 'Caption is empty, please provide a message.',
   //         needsReply,
-  //         messageId: parsedChat.message_id,
-  //         chatId: parsedChat.chat_id,
+  //         messageId: parsedMessage.message_id,
+  //         chatId: parsedMessage.chat_id,
   //         messageThreadId,
   //         isTopicMessage,
   //         ctx,
@@ -155,7 +155,7 @@ export const botActions = ({
   //       },
   //     })
 
-  //     const mentionName = `@${parsedChat.username}`
+  //     const mentionName = `@${parsedMessage.username}`
   //     if (botUsername && !needsReply) text = `${mentionName} ${text}`
 
   //     await ctxReply(text, ctx, replyParameters)
@@ -163,8 +163,8 @@ export const botActions = ({
   //     await sendError({
   //       message: 'An error occurred, please contact Sensay with the error id.',
   //       needsReply,
-  //       messageId: parsedChat.message_id,
-  //       chatId: parsedChat.chat_id,
+  //       messageId: parsedMessage.message_id,
+  //       chatId: parsedMessage.chat_id,
   //       isTopicMessage,
   //       messageThreadId,
   //       ctx,
@@ -193,7 +193,7 @@ export const botActions = ({
         isTopicMessage,
         botUsername,
         messageThreadId,
-        parsedChat: chat,
+        parsedMessage: chat,
         overridePlan,
         ownerUuid,
         replicaUuid,
@@ -265,7 +265,7 @@ export const botActions = ({
           botUsername,
           replicaUuid,
           messageThreadId,
-          parsedChat: chat,
+          parsedMessage: chat,
           overridePlan,
           ownerUuid,
           messageText,
@@ -285,7 +285,7 @@ export const botActions = ({
         isTopicMessage,
         botUsername,
         messageThreadId,
-        parsedChat: chat,
+        parsedMessage: chat,
         overridePlan,
         ownerUuid,
         replicaUuid,
@@ -315,7 +315,7 @@ export const botActions = ({
 }
 
 type ReplyToPrivateMessageArgs = {
-  parsedChat: ParsedTelegramChat
+  parsedMessage: ParsedTelegramChat
   replicaUuid: string
   messageThreadId: number | undefined
   botUsername: string
@@ -329,7 +329,7 @@ type ReplyToPrivateMessageArgs = {
 
 export async function replyToPrivateMessage({
   botUsername,
-  parsedChat,
+  parsedMessage,
   replicaUuid,
   messageThreadId,
   overridePlan,
@@ -339,7 +339,7 @@ export async function replyToPrivateMessage({
   elevenlabsId,
   ctx,
 }: ReplyToPrivateMessageArgs) {
-  const needsReply = hasUserRepliedToReplica(parsedChat, botUsername)
+  const needsReply = hasUserRepliedToReplica(parsedMessage, botUsername)
 
   ctx.chatAction = 'typing'
 
@@ -350,8 +350,8 @@ export async function replyToPrivateMessage({
       message:
         'Please renew your subscription. https://www.sensay.io/pricing to visit Sensay pricing.',
       needsReply: false,
-      messageId: parsedChat.message_id,
-      chatId: parsedChat.chat_id,
+      messageId: parsedMessage.message_id,
+      chatId: parsedMessage.chat_id,
       messageThreadId,
       isTopicMessage,
       ctx,
@@ -362,10 +362,10 @@ export async function replyToPrivateMessage({
 
   const replyParameters = getReplyParameters('private', {
     needsReply,
-    messageId: parsedChat.message_id,
+    messageId: parsedMessage.message_id,
     messageThreadId,
     isTopicMessage,
-    chatId: parsedChat.chat_id,
+    chatId: parsedMessage.chat_id,
   })
 
   const { voice, token, usage } = await isUserAskingForSnsyTokenOrVoiceRecording(messageText)
@@ -377,18 +377,20 @@ export async function replyToPrivateMessage({
     }
     await sendVoiceRecording({
       ctx: ctx,
-      parsedChat,
+      parsedMessage,
       messageText,
       replicaUuid,
       elevenlabsId,
-      usage,
+      needsReply,
+      messageThreadId,
+      isTopicMessage,
       replyParameters,
     })
     return
   }
 
   await sendMessage({
-    parsedChat,
+    parsedMessage,
     needsReply,
     messageText,
     replicaUuid,
@@ -404,7 +406,7 @@ export async function replyToPrivateMessage({
 
 type ReplyToPublicMessageArgs = {
   isTopicMessage: boolean | undefined
-  parsedChat: ParsedTelegramChat
+  parsedMessage: ParsedTelegramChat
   messageThreadId: number | undefined
   botUsername: string
   ownerUuid: string
@@ -417,7 +419,7 @@ type ReplyToPublicMessageArgs = {
 
 export const publicMessageResponse = async ({
   isTopicMessage,
-  parsedChat,
+  parsedMessage,
   messageThreadId,
   botUsername,
   overridePlan,
@@ -427,7 +429,7 @@ export const publicMessageResponse = async ({
   text,
   elevenlabsId,
 }: ReplyToPublicMessageArgs) => {
-  const needsReply = hasUserRepliedToReplica(parsedChat, botUsername)
+  const needsReply = hasUserRepliedToReplica(parsedMessage, botUsername)
 
   if (!text.includes(`@${botUsername}`) && !needsReply) return
 
@@ -439,8 +441,8 @@ export const publicMessageResponse = async ({
     await sendError({
       message: 'No message was provided',
       needsReply: false,
-      messageId: parsedChat.message_id,
-      chatId: parsedChat.chat_id,
+      messageId: parsedMessage.message_id,
+      chatId: parsedMessage.chat_id,
       messageThreadId,
       isTopicMessage,
       ctx,
@@ -457,8 +459,8 @@ export const publicMessageResponse = async ({
       message:
         'Please renew your subscription. https://www.sensay.io/pricing to visit Sensay pricing.',
       needsReply: false,
-      messageId: parsedChat.message_id,
-      chatId: parsedChat.chat_id,
+      messageId: parsedMessage.message_id,
+      chatId: parsedMessage.chat_id,
       messageThreadId,
       isTopicMessage,
       ctx,
@@ -469,9 +471,9 @@ export const publicMessageResponse = async ({
 
   const replyParameters = getReplyParameters('group', {
     needsReply,
-    messageId: parsedChat.message_id,
+    messageId: parsedMessage.message_id,
     messageThreadId,
-    chatId: parsedChat.chat_id,
+    chatId: parsedMessage.chat_id,
     isTopicMessage,
   })
 
@@ -486,18 +488,20 @@ export const publicMessageResponse = async ({
 
     await sendVoiceRecording({
       ctx: ctx,
-      parsedChat,
+      parsedMessage,
       messageText: messageTextWithoutMention,
       replicaUuid,
       elevenlabsId,
-      usage,
+      needsReply,
+      messageThreadId,
+      isTopicMessage,
       replyParameters,
     })
     return
   }
 
   await sendMessage({
-    parsedChat,
+    parsedMessage,
     needsReply,
     messageText: messageTextWithoutMention,
     replicaUuid,

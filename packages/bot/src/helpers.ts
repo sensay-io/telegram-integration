@@ -2,6 +2,7 @@ import type { AutoChatActionFlavor } from '@grammyjs/auto-chat-action'
 import type { FileFlavor } from '@grammyjs/files'
 import type { Context, RawApi } from 'grammy'
 import type { Other as OtherApi } from 'grammy/out/core/api.js'
+import type { Message, Update } from '@grammyjs/types'
 
 import { openai } from '@ai-sdk/openai'
 import { type LanguageModelUsage, generateObject } from 'ai'
@@ -111,20 +112,6 @@ export async function ctxReply(
   return await ctx.reply(escapeMarkdown(message), replyParameters)
 }
 
-export function calculateTokenCost(tokenUsage: LanguageModelUsage) {
-  const { promptTokens, completionTokens } = tokenUsage
-
-  const promptCostPerMillion = 5.0
-  const completionCostPerMillion = 15.0
-
-  const costForPromptTokens = (promptTokens / 1000000) * promptCostPerMillion
-  const costForCompletionTokens = (completionTokens / 1000000) * completionCostPerMillion
-
-  const totalCost = costForPromptTokens + costForCompletionTokens
-
-  return totalCost
-}
-
 export async function isUserAskingForSnsyTokenOrVoiceRecording(input: string) {
   const personaSystemMessage = codeBlock`You are tasked with analyzing input to identify mentions of voice messages and SNSY token prices. Your goals are to determine whether the input includes a request made via a voice message and whether it discusses the price of the SNSY token.
 
@@ -175,8 +162,6 @@ Examples:
   return { ...object, usage: usage }
 }
 
-import type { Message, Update } from '@grammyjs/types'
-
 export function parse(message: Message & Update.NonChannel): ParsedTelegramChat {
   const reply = message.reply_to_message
     ? {
@@ -205,7 +190,7 @@ export type ParsedTelegramChat = {
   last_name?: string
   username?: string
   is_bot: boolean | null
-  user_id: number | null
+  user_id: number
   message_id: number
   chat_id: number
   type: string

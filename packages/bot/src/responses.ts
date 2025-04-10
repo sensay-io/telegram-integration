@@ -11,14 +11,14 @@ import removeMd from 'remove-markdown'
 import type { ReplyParameterType } from './helpers'
 import { ctxReply } from './helpers'
 import { type ParsedTelegramChat, getReplyParameters } from './helpers'
-import { getTelegramResponse } from './service/sensay.api'
+import { postV1ReplicasByReplicaUuidChatCompletionsTelegram } from '../../client/sdk.gen'
 
 const captureException = (error: Error, extra?: unknown) => {
   console.error(error, extra)
 }
 
 type SendMessageArgs = {
-  parsedChat: ParsedTelegramChat
+  parsedMessage: ParsedTelegramChat
   needsReply: boolean
   messageText: string
   replicaUuid: string
@@ -32,7 +32,7 @@ type SendMessageArgs = {
 }
 
 export async function sendMessage({
-  parsedChat,
+  parsedMessage,
   needsReply,
   messageText,
   replicaUuid,
@@ -49,21 +49,39 @@ export async function sendMessage({
     return
   }
 
-  let fullResponse = await getTelegramResponse(replicaUuid, ctx.from?.id.toString() || '', {
-    content: messageText,
-    source: 'telegram',
-    skip_chat_history: false,
-    telegram_data: {
-      chat_type: parsedChat.type,
-      chat_id: parsedChat.chat_id.toString(),
-      user_id: parsedChat.user_id?.toString() || '',
-      username: parsedChat.username || '',
-      message_id: parsedChat.message_id.toString(),
-      message_thread_id: messageThreadId?.toString() || '',
+  const completionResponse = await postV1ReplicasByReplicaUuidChatCompletionsTelegram({
+    path: { replicaUUID: replicaUuid },
+    body: {
+      content: messageText,
+      skip_chat_history: false,
+      telegram_data: {
+        chat_type: parsedMessage.type,
+        chat_id: parsedMessage.chat_id,
+        user_id: parsedMessage.user_id!,
+        username: parsedMessage.username || '',
+        message_id: parsedMessage.message_id,
+        message_thread_id: messageThreadId,
+      },
     },
   })
 
-  const mentionName = `@${parsedChat.username}`
+  let fullResponse = completionResponse.data?.content
+
+  if (!fullResponse) {
+    await sendError({
+      message:
+        'An error occurred while generating your response, please contact Sensay with the error id.',
+      needsReply,
+      messageId: parsedMessage.message_id,
+      chatId: parsedMessage.chat_id,
+      messageThreadId,
+      ctx,
+      isTopicMessage,
+    })
+    return
+  }
+
+  const mentionName = `@${parsedMessage.username}`
   if (botUsername && !needsReply) fullResponse = `${mentionName} ${fullResponse}`
 
   try {
@@ -73,8 +91,8 @@ export async function sendMessage({
       message:
         'An error occurred with sending your message, please contact Sensay with the error id.',
       needsReply,
-      messageId: parsedChat.message_id,
-      chatId: parsedChat.chat_id,
+      messageId: parsedMessage.message_id,
+      chatId: parsedMessage.chat_id,
       messageThreadId,
       isTopicMessage,
       ctx,
@@ -145,41 +163,63 @@ const elevenLabs = new ElevenLabsClient({
 
 type SendVoiceRecordingArgs = {
   ctx: FileFlavor<Context & AutoChatActionFlavor>
-  parsedChat: ParsedTelegramChat
+  parsedMessage: ParsedTelegramChat
   messageText: string
   replicaUuid: string
   elevenlabsId: string
-  usage: LanguageModelUsage | undefined
   replyParameters: ReplyParameterType<Methods<RawApi>>
+  needsReply: boolean
+  messageThreadId: number | undefined
+  isTopicMessage: boolean | undefined
 }
 
 export async function sendVoiceRecording({
   ctx,
-  parsedChat,
+  parsedMessage,
   messageText,
   elevenlabsId,
-  usage,
   replicaUuid,
+  messageThreadId,
+  isTopicMessage,
   replyParameters,
+  needsReply,
 }: SendVoiceRecordingArgs) {
   if (!elevenlabsId) {
     await ctxReply('Please provide a valid Elevenlabs ID', ctx, replyParameters)
     return
   }
 
-  const text = await getTelegramResponse(replicaUuid, messageText, {
-    content: '',
-    source: '',
-    skip_chat_history: false,
-    telegram_data: {
-      chat_type: '',
-      chat_id: '',
-      user_id: '',
-      username: '',
-      message_id: '',
-      message_thread_id: '',
+  const completionResponse = await postV1ReplicasByReplicaUuidChatCompletionsTelegram({
+    path: { replicaUUID: replicaUuid },
+    body: {
+      content: messageText,
+      skip_chat_history: false,
+      telegram_data: {
+        chat_type: parsedMessage.type,
+        chat_id: parsedMessage.chat_id,
+        user_id: parsedMessage.user_id!,
+        username: parsedMessage.username || '',
+        message_id: parsedMessage.message_id,
+        message_thread_id: undefined,
+      },
     },
   })
+
+  const text = completionResponse.data?.content
+
+  if (!text) {
+    await sendError({
+      message:
+        'An error occurred while generating your response, please contact Sensay with the error id.',
+      needsReply,
+      messageId: parsedMessage.message_id,
+      chatId: parsedMessage.chat_id,
+      messageThreadId,
+      ctx,
+      isTopicMessage,
+    })
+    return
+  }
 
   const textWithoutMarkdown = removeMd(
     text.replaceAll('\\n-', '').replaceAll('\\n', '').replaceAll('  ', ' '),
@@ -197,7 +237,11 @@ export async function sendVoiceRecording({
     text: textWithoutMarkdown,
   })
 
-  await ctx.api.sendVoice(parsedChat.chat_id as number, new InputFile(audioStream), replyParameters)
+  await ctx.api.sendVoice(
+    parsedMessage.chat_id as number,
+    new InputFile(audioStream),
+    replyParameters,
+  )
 }
 
 interface DexScreenerResponse {
