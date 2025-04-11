@@ -36,7 +36,7 @@ Required environment variables:
 - `SENTRY_DSN` - Sentry DSN
 - `SENTRY_TRACES_SAMPLERATE` - Sentry traces sample rate
 - `HTTP_PORT` - Port for the HTTP API server
-- `ORCHESTRATOR_AUTH_TOKEN` - Authentication token for the orchestrator API
+- `ORCHESTRATOR_API_KEY` - Authentication token for the orchestrator API
 - `RELOAD_BOTS_INTERVAL_MS` - Interval for reloading bot definitions (default: 5 minutes)
 - `PRINT_BOTS_STATUS_INTERVAL_MS` - Interval for printing bot status (default: 1 minute)
 - `HEALTH_CHECK_TIMEOUT_MS` - Timeout for health checks (default: 1000ms)
@@ -101,7 +101,7 @@ The orchestrator exposes HTTP endpoints for managing bot instances and monitorin
 - Default: `http://localhost:3000` (configurable via `HTTP_PORT` environment variable)
 
 ### Authentication
-API endpoints under `/bots` are protected with Bearer authentication. Use the `ORCHESTRATOR_AUTH_TOKEN` environment variable to set the token.
+API endpoints under `/bots` are protected with Bearer authentication. Use the `ORCHESTRATOR_API_KEY` environment variable to set the token.
 
 ### Endpoints
 
