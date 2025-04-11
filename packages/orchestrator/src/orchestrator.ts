@@ -8,12 +8,13 @@ import { Integration, type SensayAPI } from './sensay_api'
 export type OrchestratorConfig = {
   api: SensayAPI
   logger: Logger
+  telegramServiceName: string
   reloadBotsIntervalMs: number
   printBotsStatusIntervalMs: number
   gracefulShutdownTimeoutMs: number
   healthCheckTimeoutMs: number
   healthCheckIntervalMs: number
-  maxFailedRestarts: number
+  maxFailedStartAttempts: number
 }
 
 export enum BotCRUDOperationResult {
@@ -61,7 +62,8 @@ export class Orchestrator {
         try {
           return botSupervisor.getStatusInfo()
         } catch (error) {
-          return { replicaUUID, status: BotStatus.UNHEALTHY }
+          const botDefinition = this.botsDefinitions.get(replicaUUID)
+          return { ...botDefinition, status: BotStatus.UNHEALTHY } as BotStatusInfo
         }
       },
     )
@@ -72,7 +74,7 @@ export class Orchestrator {
     await this.reloadBotsDefinitions()
 
     this.reloadBotsIntervalID = setInterval(
-      () => this.reloadBotsDefinitions(),
+      async () => await this.reloadBotsDefinitions(),
       this.config.reloadBotsIntervalMs,
     )
   }
@@ -88,7 +90,7 @@ export class Orchestrator {
       healthCheckTimeoutMs: this.config.healthCheckTimeoutMs,
       healthCheckIntervalMs: this.config.healthCheckIntervalMs,
       gracefulShutdownTimeoutMs: this.config.gracefulShutdownTimeoutMs,
-      maxFailedRestarts: this.config.maxFailedRestarts,
+      maxFailedStartAttempts: this.config.maxFailedStartAttempts,
       logger: this.config.logger,
     })
 
@@ -100,7 +102,7 @@ export class Orchestrator {
   }
 
   async updateBot(
-    botDefinitionUpdate: Pick<BotDefinition, 'replicaUUID' | 'ownerUuid'> & Partial<BotDefinition>,
+    botDefinitionUpdate: Pick<BotDefinition, 'replicaUUID'> & Partial<BotDefinition>,
   ): Promise<
     | BotCRUDOperationResult.Created
     | BotCRUDOperationResult.Updated
@@ -113,15 +115,24 @@ export class Orchestrator {
       return BotCRUDOperationResult.NotFound
     }
 
-    const botDefinition = {
-      ...existingBotDefinition,
-      ...botDefinitionUpdate,
+    const newBotDefinition = Object.assign({}, existingBotDefinition, botDefinitionUpdate, {
       token,
+    })
+
+    // TODO: Implement general equality function
+    if (
+      newBotDefinition.replicaUUID === existingBotDefinition?.replicaUUID &&
+      newBotDefinition.replicaSlug === existingBotDefinition?.replicaSlug &&
+      newBotDefinition.ownerUUID === existingBotDefinition?.ownerUUID &&
+      newBotDefinition.token.getSensitiveValue() ===
+        existingBotDefinition?.token.getSensitiveValue()
+    ) {
+      return BotCRUDOperationResult.Updated
     }
 
-    const deleteResult = await this.deleteBot(botDefinition.replicaUUID)
+    const deleteResult = await this.deleteBot(newBotDefinition.replicaUUID)
 
-    await this.addBot(botDefinition)
+    await this.addBot(newBotDefinition)
 
     return deleteResult === BotCRUDOperationResult.Deleted
       ? BotCRUDOperationResult.Updated
@@ -142,8 +153,14 @@ export class Orchestrator {
   }
 
   private async reloadBotsDefinitions(): Promise<void> {
+    this.logger.addBreadcrumb({
+      category: 'reload_bots_definitions',
+      message: 'Reloading bots definitions',
+    })
+
     try {
       this.botsDefinitions = await this.loadBotsDefinitions()
+      console.table(Array.from(this.botsDefinitions.values()))
     } catch (error) {
       this.logger.error(error as Error, 'Failed to reload bots definitions')
       return
@@ -179,17 +196,19 @@ export class Orchestrator {
       intergration: Integration.TELEGRAM,
     })
 
-    const botsDefinitions: [ReplicaUUID, BotDefinition][] = replicas.map((replica) => {
-      return [
-        replica.uuid,
-        {
-          replicaUUID: replica.uuid,
-          replicaSlug: replica.slug,
-          token: new SensitiveString(replica.telegram_integration?.token ?? ''),
-          ownerUuid: replica.owner_uuid,
-        } satisfies BotDefinition,
-      ]
-    })
+    const botsDefinitions: [ReplicaUUID, BotDefinition][] = replicas
+      .filter((replica) => replica.telegram_service_name === this.config.telegramServiceName)
+      .map((replica) => {
+        return [
+          replica.uuid,
+          {
+            replicaUUID: replica.uuid,
+            replicaSlug: replica.slug,
+            ownerUUID: replica.owner_uuid,
+            token: new SensitiveString(replica.telegram_integration?.token ?? ''),
+          } satisfies BotDefinition,
+        ]
+      })
     return new Map(botsDefinitions)
   }
 }

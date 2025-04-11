@@ -21,10 +21,11 @@ type TraceAllConfig = {
  */
 export function traceAll({ env }: TraceAllConfig = { env: Environment.DEVELOPMENT }) {
   if (env !== config.NODE_ENV) {
-    return () => {}
+    return (_: unknown) => {}
   }
 
-  return decorateAll(traceMethod)
+  // return decorateAll(traceMethod)
+  return (_: unknown) => {}
 }
 
 export function traceMethod<This extends object, Args extends unknown[], Return>(

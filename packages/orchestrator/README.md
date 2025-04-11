@@ -33,6 +33,8 @@ Required environment variables:
 - `LOG_LEVEL` - Logging level (trace, debug, info, warn, error, fatal)
 - `SENSAY_API_URL` - URL of the Sensay API service
 - `SENSAY_API_KEY` - API key for authentication with Sensay API
+- `SENTRY_DSN` - Sentry DSN
+- `SENTRY_TRACES_SAMPLERATE` - Sentry traces sample rate
 - `HTTP_PORT` - Port for the HTTP API server
 - `ORCHESTRATOR_AUTH_TOKEN` - Authentication token for the orchestrator API
 - `RELOAD_BOTS_INTERVAL_MS` - Interval for reloading bot definitions (default: 5 minutes)
@@ -40,7 +42,17 @@ Required environment variables:
 - `HEALTH_CHECK_TIMEOUT_MS` - Timeout for health checks (default: 1000ms)
 - `HEALTH_CHECK_INTERVAL_MS` - Interval between health checks (default: 5000ms)
 - `GRACEFUL_SHUTDOWN_TIMEOUT_MS` - Timeout for graceful shutdown (default: 1000ms)
-- `MAX_FAILED_RESTARTS` - Maximum number of failed restart attempts (default: 3)
+- `MAX_FAILED_START_ATTEMPTS` - Maximum number of failed start attempts (default: 3)
+
+## Sentry integration
+To enable Sentry integration, set the following environment variables before running the build:
+```bash
+export SENTRY_AUTH_TOKEN=...
+export SENTRY_ORGANIZATION=...
+export SENTRY_PROJECT=...
+```
+Auth tokens can be obtained from https://sentry.io/orgredirect/organizations/:orgslug/settings/auth-tokens/
+
 
 ## Development
 ```bash

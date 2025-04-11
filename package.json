@@ -5,11 +5,10 @@
   "license": "Apache-2.0",
   "author": "Sensay",
   "description": "Sensay Telegram integration",
-  "keywords": [
-    "bots",
-    "telegram",
-    "sensay"
-  ],
+  "keywords": ["bots", "telegram", "sensay"],
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "build": "npm run build:bot && npm run build:orc",
     "build:bot": "npm run build -w packages/bot",
@@ -23,11 +22,13 @@
     "check": "biome check --diagnostic-level=warn",
     "check:write": "biome check --diagnostic-level=warn --write"
   },
-  "engines": {
-    "node": ">=22.13.11"
-  },
   "lint-staged": {
     "*.{js,ts,json}": "biome check --write src"
+  },
+  "dependencies": {
+    "@hey-api/client-fetch": "^0.10.0",
+    "@hey-api/openapi-ts": "^0.66.3",
+    "@hono/node-server": "^1.14.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
@@ -36,15 +37,5 @@
     "tsx": "^4.19.3",
     "typescript": "^5.8.2"
   },
-  "workspaces": [
-    "packages/*"
-  ],
-  "volta": {
-    "node": "23.10.0"
-  },
-  "dependencies": {
-    "@hey-api/client-fetch": "^0.10.0",
-    "@hey-api/openapi-ts": "^0.66.3",
-    "@hono/node-server": "^1.14.0"
-  }
+  "workspaces": ["packages/*"]
 }

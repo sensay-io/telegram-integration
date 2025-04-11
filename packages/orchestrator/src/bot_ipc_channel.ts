@@ -1,6 +1,5 @@
 import { randomUUID } from 'node:crypto'
 import type { BotDefinition } from './bot_definition'
-import { traceAll } from './logging/decorators'
 import type { Logger } from './logging/logger'
 import { type TypedWorker, WorkerEvent } from './types/worker'
 import { chaosTest } from './utils/chaos'
@@ -35,7 +34,6 @@ type BotRequestHandler<T extends BotRequest> = (
  * It tries to hide the low-level details of the IPC mechanism, and provide a type-safe API on top of it.
  */
 @chaosTest()
-@traceAll()
 export class BotIPCChannel {
   constructor(
     private readonly botDefinition: BotDefinition,
@@ -65,7 +63,7 @@ export class BotIPCChannel {
   }
 
   // Workaround for https://github.com/nodejs/node/issues/48578
-  async waitForReadyEvent(timeoutMs: number) {
+  async waitForReadyEvent(timeoutMs: number): Promise<ReadyMessage> {
     return await this.waitForMessage({ type: 'READY' }, timeoutMs)
   }
 
@@ -74,7 +72,8 @@ export class BotIPCChannel {
     timeoutMs: number,
   ): Promise<BotResponseFor<TRequest>> {
     return withTimeout((resolve) => {
-      const handler = (response: BotResponseFor<TRequest>) => {
+      const handler = (message: unknown) => {
+        const response = message as BotResponseFor<TRequest>
         if (response.type === request.type && response.id === request.id) {
           resolve(response)
         }
@@ -97,7 +96,8 @@ export class BotIPCChannel {
   }
 
   private onRequest<T extends BotRequest>(requestType: T['type'], handler: BotRequestHandler<T>) {
-    this.worker.on<T>(WorkerEvent.MESSAGE, (request) => {
+    this.worker.on(WorkerEvent.MESSAGE, (message) => {
+      const request = message as T
       if (request.type === requestType) {
         handler(request, (response) => this.worker.send(response))
       }

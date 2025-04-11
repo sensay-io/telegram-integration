@@ -52,6 +52,9 @@
       "semicolons": "asNeeded"
     }
   },
+  "organizeImports": {
+    "enabled": true
+  },
   "overrides": [
     {
       // Biome treats tsconfig.json files in a special way,

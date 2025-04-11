@@ -2,9 +2,9 @@ import { createServer } from 'node:http'
 import type { Logger } from '@/logging/logger'
 import type { Orchestrator } from '@/orchestrator'
 import { type ServerType, createAdaptorServer } from '@hono/node-server'
+import { sentry } from '@hono/sentry'
 import { swaggerUI } from '@hono/swagger-ui'
 import { OpenAPIHono } from '@hono/zod-openapi'
-import type { MiddlewareHandler } from 'hono'
 import { bearerAuth } from 'hono/bearer-auth'
 import { HTTPException } from 'hono/http-exception'
 import { prettyJSON } from 'hono/pretty-json'
@@ -12,13 +12,11 @@ import { botsDELETE } from './bots/bots_delete'
 import { botsPOST } from './bots/bots_post'
 import { botsPUT } from './bots/bots_put'
 
-const noopMiddleware: MiddlewareHandler = (c, next) => next()
-
 const API_TITLE = 'Sensay Telegram Bot Orchestrator'
 const API_VERSION = '2025-04-01'  // TODO: MICHELE: discuss
 
 export type OrchestratorAPIConfig = {
-  authToken?: string
+  authToken: string
   httpPort: number
   logger: Logger
 }
@@ -75,11 +73,11 @@ export class OrchestratorAPI {
   private createHTTPServer() {
     const app = new OpenAPIHono()
 
-    const auth = this.config.authToken
-      ? bearerAuth({ token: this.config.authToken })
-      : noopMiddleware
+    const auth = bearerAuth({ token: this.config.authToken })
 
     app.use('/bots', auth)
+
+    app.use('*', sentry())
 
     app.use(prettyJSON())
 
@@ -94,14 +92,22 @@ export class OrchestratorAPI {
 
     app.get('/', (c) =>
       c.html(
-        `<h1>${API_TITLE}</h1>
-        <ul>
-          <li><a href='/ui'>Swagger</a></li>
-          <li><a href='/schema'>Schema</a></li>
-          <li><a href='/health?pretty'>Health</a></li>
-          <li><a href='/status?pretty'>Status</a></li>
-        </ul>
-        `,
+        `<!DOCTYPE html>
+        <html lang="en">
+          <head>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+          </head>
+          <body>
+            <h1>${API_TITLE}</h1>
+            <ul>
+              <li><a href='/ui'>Swagger</a></li>
+              <li><a href='/schema'>Schema</a></li>
+              <li><a href='/health?pretty'>Health</a></li>
+              <li><a href='/status?pretty'>Status</a></li>
+            </ul>
+          </body>
+        </html>`,
       ),
     )
 
