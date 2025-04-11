@@ -6,7 +6,7 @@ import { SensitiveStringSchema } from './sensitive_string'
 const envSchema = z
   .object({
     HTTP_PORT: z.coerce.number().min(1).max(65535).default(3000),
-    ORCHESTRATOR_AUTH_TOKEN: SensitiveStringSchema,
+    ORCHESTRATOR_API_KEY: SensitiveStringSchema,
     SENSAY_API_URL: z.string().url(),
     SENSAY_API_KEY: SensitiveStringSchema,
     VERCEL_PROTECTION_BYPASS_KEY: SensitiveStringSchema,

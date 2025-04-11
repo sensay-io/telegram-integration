@@ -82,7 +82,7 @@ orchestrator.start()
 const orchestratorAPI = new OrchestratorAPI(orchestrator, {
   logger,
   httpPort: config.HTTP_PORT,
-  authToken: config.ORCHESTRATOR_AUTH_TOKEN.getSensitiveValue(),
+  authToken: config.ORCHESTRATOR_API_KEY.getSensitiveValue(),
 })
 
 orchestratorAPI.start()
