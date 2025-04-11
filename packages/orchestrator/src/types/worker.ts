@@ -4,20 +4,25 @@ import type { Signal } from './process'
 
 export enum WorkerEvent {
   MESSAGE = 'message',
+  ERROR = 'error',
   EXIT = 'exit',
 }
 
 export type WorkerEventMap = {
   [WorkerEvent.MESSAGE]: [unknown]
+  [WorkerEvent.ERROR]: [Error]
   [WorkerEvent.EXIT]: [number, string]
 }
 
 export type TypedWorker = Subset<
   Worker,
   {
-    on<T>(event: WorkerEvent, listener: (message: T) => void): void
-    once<T>(event: WorkerEvent, listener: (message: T) => void): void
-    off<T>(event: WorkerEvent, listener: (message: T) => void): void
+    process: {
+      pid?: number
+    }
+    on<T extends WorkerEvent>(event: T, listener: (...args: WorkerEventMap[T]) => void): void
+    once<T extends WorkerEvent>(event: T, listener: (...args: WorkerEventMap[T]) => void): void
+    off<T extends WorkerEvent>(event: T, listener: (...args: WorkerEventMap[T]) => void): void
     send<T>(message: T): void
     isConnected(): boolean
     isDead(): boolean

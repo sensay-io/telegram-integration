@@ -1,10 +1,11 @@
+import { env } from 'node:process'
 import type { AutoChatActionFlavor } from '@grammyjs/auto-chat-action'
 import type { FileFlavor } from '@grammyjs/files'
 import type { Context, RawApi } from 'grammy'
 import type { Other as OtherApi } from 'grammy/out/core/api.js'
 import type { Message, Update } from '@grammyjs/types'
 
-import { openai } from '@ai-sdk/openai'
+import { createOpenAI } from '@ai-sdk/openai'
 import { generateObject } from 'ai'
 import { codeBlock } from 'common-tags'
 import type { Methods } from 'grammy/out/core/client.js'
@@ -109,6 +110,8 @@ Examples:
   const schema = z.object({
     voice: z.boolean(),
   })
+
+  const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY })
 
   const { object }: { object: { voice: boolean } } = await generateObject({
     model: openai('gpt-4o-mini'),

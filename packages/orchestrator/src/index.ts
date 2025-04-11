@@ -16,7 +16,7 @@ if (!cluster.isPrimary) {
 }
 
 cluster.setupPrimary({
-  exec: path.resolve(import.meta.dirname, '../dist/start_worker.js'),
+  exec: path.resolve(import.meta.dirname, 'start_worker.js'),
 })
 
 process.on(Signal.SIGINT, () => shutdown(Signal.SIGINT))
@@ -37,7 +37,7 @@ const shutdown = (reason: Signal) => {
   logger.trace(`Shutting down orchestrator: ${reason}`)
 
   orchestratorAPI.stop().catch((err) => {
-    logger.error(err, 'Error shutting down API app')
+    logger.warn(err, 'Error shutting down API app')
   })
 
   orchestrator
@@ -55,7 +55,7 @@ const shutdown = (reason: Signal) => {
   const gracefulShutdownTimeout = config.GRACEFUL_SHUTDOWN_TIMEOUT_MS * 2
 
   setTimeout(() => {
-    logger.error(`Graceful shutdown timeout ${gracefulShutdownTimeout} ms`)
+    logger.warn(`Graceful shutdown timeout ${gracefulShutdownTimeout} ms`)
     process.exit(1)
   }, gracefulShutdownTimeout)
 }
@@ -68,12 +68,13 @@ const api =
 const orchestrator = new Orchestrator({
   api,
   logger,
+  telegramServiceName: config.TELEGRAM_SERVICE_NAME,
   reloadBotsIntervalMs: config.RELOAD_BOTS_INTERVAL_MS,
   printBotsStatusIntervalMs: config.PRINT_BOTS_STATUS_INTERVAL_MS,
   gracefulShutdownTimeoutMs: config.GRACEFUL_SHUTDOWN_TIMEOUT_MS,
   healthCheckTimeoutMs: config.HEALTH_CHECK_TIMEOUT_MS,
   healthCheckIntervalMs: config.HEALTH_CHECK_INTERVAL_MS,
-  maxFailedRestarts: config.MAX_FAILED_RESTARTS,
+  maxFailedStartAttempts: config.MAX_FAILED_START_ATTEMPTS,
 })
 
 orchestrator.start()
@@ -81,7 +82,11 @@ orchestrator.start()
 const orchestratorAPI = new OrchestratorAPI(orchestrator, {
   logger,
   httpPort: config.HTTP_PORT,
-  authToken: config.ORCHESTRATOR_AUTH_TOKEN?.getSensitiveValue(),
+  authToken: config.ORCHESTRATOR_AUTH_TOKEN.getSensitiveValue(),
 })
 
 orchestratorAPI.start()
+
+// The lack of any exports makes Sentry bundler plugin unhappy
+// https://github.com/getsentry/sentry-javascript-bundler-plugins/issues/471
+export default {}

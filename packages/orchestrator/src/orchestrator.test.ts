@@ -41,12 +41,13 @@ describe('Orchestrator', () => {
     const orchestrator = new Orchestrator({
       api: new FakeSensayAPIClient({ replicas: FAKE_REPLICAS }),
       logger: Logger.create({ level: LoggerLevel.INFO }),
+      telegramServiceName: 'sensay-telegram-integrations',
       reloadBotsIntervalMs: 1000,
       printBotsStatusIntervalMs: 1000,
       gracefulShutdownTimeoutMs: 1000,
       healthCheckTimeoutMs: 1000,
       healthCheckIntervalMs: 1000,
-      maxFailedRestarts: 1,
+      maxFailedStartAttempts: 1,
     })
 
     await orchestrator.start()

@@ -10,9 +10,13 @@ const envSchema = z
     REPLICA_UUID: z.string(),
     REPLICA_SLUG: z.string().optional(),
     OWNER_UUID: z.string(),
+    SENSAY_API_URL: z.string(),
     SENSAY_API_KEY: z.string(),
-    SENSAY_ORGANIZATION_SECRET: z.string(),
     VERCEL_PROTECTION_BYPASS_KEY: z.string(),
+    OPENAI_API_KEY: SensitiveStringSchema,
+    ELEVENLABS_API_KEY: SensitiveStringSchema,
+    SENTRY_TRACE_HEADER: z.string().optional(),
+    SENTRY_BAGGAGE_HEADER: z.string().optional(),
   })
   .extend(commonEnvSchema.shape)
 
@@ -21,14 +25,16 @@ export type Env = z.infer<typeof envSchema>
 function createConfig() {
   const parsed = envSchema.safeParse(process.env)
 
+  const logger = commonConfig.logger
+
   if (parsed.success) {
     if (parsed.data.NODE_ENV !== Environment.TEST) {
-      console.log('\nEnvironment validation passed:')
-      console.table(Object.entries(parsed.data))
+      logger.trace('Environment validation passed:')
+      logger.table(Object.entries(parsed.data))
     }
   } else {
-    console.error('Environment validation failed:')
-    console.table(parsed.error.issues)
+    logger.fatal('Environment validation failed:')
+    logger.table(parsed.error.issues)
     process.exit(-1)
   }
 

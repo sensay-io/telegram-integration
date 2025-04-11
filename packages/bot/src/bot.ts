@@ -1,17 +1,17 @@
+import assert from 'node:assert'
 import type { AutoChatActionFlavor } from '@grammyjs/auto-chat-action'
 import type { FileFlavor } from '@grammyjs/files'
 import type { Api, Bot, Context, RawApi } from 'grammy'
-import { botActions, NonCriticalError } from './bot-actions'
-import { hasUserRepliedToReplica } from './helpers'
-import { parse } from './helpers'
 import {
   getV1UsersMe,
   postV1ReplicasByReplicaUuidChatHistoryTelegram,
   postV1Users,
 } from '../../client/sdk.gen'
+import { NonCriticalError, botActions } from './bot-actions'
 import { initTelegramBot } from './bot-actions'
-import assert from 'node:assert'
-import { commonHeaders, PRIVATE_CHAT } from './constants'
+import { PRIVATE_CHAT, commonHeaders } from './constants'
+import { hasUserRepliedToReplica } from './helpers'
+import { parse } from './helpers'
 import { sendError } from './responses'
 
 type MyContext = FileFlavor<Context & AutoChatActionFlavor>
@@ -21,6 +21,7 @@ export class BotClient {
   private readonly bot: MyBot
   private readonly replicaUuid: string
   private readonly ownerUuid: string
+  private readonly isStarted = Promise.withResolvers<boolean>()
 
   constructor(botToken: string, replicaUuid: string, ownerUuid: string) {
     this.replicaUuid = replicaUuid
@@ -28,8 +29,8 @@ export class BotClient {
     this.bot = initTelegramBot(botToken)
   }
 
-  isHealthy() {
-    return this.bot.isInited() && this.bot.isRunning()
+  async isHealthy() {
+    return this.bot.isInited() && this.bot.isRunning() && (await this.isStarted.promise)
   }
 
   async start() {
@@ -109,6 +110,7 @@ export class BotClient {
     this.bot.start({
       // Don't await bot.start method. It blocks until the bot is stopped. https://grammy.dev/ref/core/bot#start
       onStart: (botInfo) => {
+        this.isStarted.resolve(true)
         console.log(`@${botInfo.username} is running\n`)
       },
     })

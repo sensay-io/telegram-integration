@@ -22,17 +22,17 @@ export class BotWorker {
     private readonly logger: Logger,
   ) {
     this.logger = logger.child({
-      module: `${BotWorker.name}(${this.botDefinition.replicaUUID})`,
+      module: BotWorker.name,
       replicaUUID: this.botDefinition.replicaUUID,
       replicaSlug: this.botDefinition.replicaSlug,
     })
 
     this.ipcChannel = new BotIPCChannel(this.botDefinition, this.worker, this.logger)
-    this.ipcChannel.onHealthCheck((request, sendResponse) => {
+    this.ipcChannel.onHealthCheck(async (request, sendResponse) => {
       const response: HealthCheckResponse = {
         id: request.id,
         type: 'HEALTH_CHECK',
-        isHealthy: this.botClient.isHealthy(),
+        isHealthy: await this.botClient.isHealthy(),
       }
 
       sendResponse(response)

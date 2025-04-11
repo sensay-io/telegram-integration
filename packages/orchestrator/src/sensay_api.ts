@@ -1,7 +1,9 @@
+import assert from 'node:assert'
+import dotenv from 'dotenv'
 import { z } from 'zod'
 import { ReplicaUUIDSchema } from './bot_definition'
-import { chaosTest } from './utils/chaos'
-import { env } from './env'
+import { envenv
+import { chaosTestosTestosTesutils/chaosTesutils/chaosTesutils/chaosTesutils/chaosTesutils/chaos frutils/chaos'./utils/chaos'
 
 class SensayAPIError extends Error {
   readonly status: number
@@ -83,13 +85,16 @@ export class SensayAPIClient implements SensayAPI {
     private readonly apiKey: string,
   ) {}
 
-  async getReplicas(): Promise<Replica[]> {
+  async getReplicas({ intergration }: GetReplicasParams): Promise<Replica[]> {
     const url = new URL(`${this.baseURL}/v1/replicas`)
 
-    url.searchParams.set('integration', 'telegram')
+    url.searchParams.set('integration', intergration)
 
-    // Specifying a specific owner_uuid so collide we other working replicas from Sensay
-    url.searchParams.set('owner_uuid', env.OWNER_UUID)
+    if (env.OWNER_UUID) { // Optional for testing
+      // Specifying a specific owner_uuid so collide we other working replicas from Sensay
+      url.searchParams.set('owner_uuid', env.OWNER_UUID)
+    }
+
 
     const response = await this.get(
       url,

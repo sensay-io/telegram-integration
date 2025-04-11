@@ -1,9 +1,9 @@
 import cluster from 'node:cluster'
+import * as Sentry from '@sentry/node'
 import type { BotDefinition } from './bot_definition'
 import { BotIPCChannel } from './bot_ipc_channel'
 import { config as clusterConfig } from './config/cluster'
 import type { Env } from './config/worker'
-import { traceAll } from './logging/decorators'
 import type { Logger } from './logging/logger'
 import { Signal } from './types/process'
 import { type TypedWorker, WorkerEvent, type WorkerEventMap } from './types/worker'
@@ -22,48 +22,63 @@ type BotHostConfig = {
  * Acts as a proxy between the {@link BotSupervisor} and the {@link BotWorker}.
  */
 @chaosTest()
-@traceAll()
 export class BotHost {
+  private readonly ipcChannel: BotIPCChannel
+
   constructor(
-    private readonly botDefinition: BotDefinition,
+    botDefinition: BotDefinition,
     private readonly worker: TypedWorker,
-    private readonly ipcChannel: BotIPCChannel,
     private readonly config: BotHostConfig,
-    private readonly logger: Logger, // TODO: MICHELE: unused?
   ) {
-    this.logger = logger.child({
-      module: `${BotHost.name}(${this.botDefinition.replicaUUID})`,
-      replicaUUID: this.botDefinition.replicaUUID,
-      replicaSlug: this.botDefinition.replicaSlug,
-    })
+    this.ipcChannel = new BotIPCChannel(botDefinition, worker, config.logger)
   }
 
   get isConnected(): boolean {
     return this.worker?.isConnected()
   }
 
-  static async start(botDefinition: BotDefinition, config: BotHostConfig) {
-    const logger = config.logger.child({
-      module: BotHost.name,
-      replicaUUID: botDefinition.replicaUUID,
-      replicaSlug: botDefinition.replicaSlug,
-    })
+  get PID(): number | undefined {
+    return this.worker?.process.pid
+  }
+
+  static async start(botDefinition: BotDefinition, config: BotHostConfig): Promise<BotHost> {
+    // TODO: Double check that passing Sentry trace headers to the worker process is needed.
+    // It seems like Sentry does this automatically:
+    // https://github.com/getsentry/sentry-javascript/blob/3bc192315d73f0e2058c70c46500da738dfe0d32/packages/node/src/sdk/index.ts#L70
+    const traceData = Sentry.getTraceData()
+    const sentryTraceHeader = traceData['sentry-trace']
+    const sentryBaggageHeader = traceData.baggage
 
     const worker = cluster.fork({
       // Every environment variable is passed as a raw string
       BOT_TOKEN: botDefinition.token.getSensitiveValue(),
       REPLICA_UUID: botDefinition.replicaUUID,
       REPLICA_SLUG: botDefinition.replicaSlug,
+      OWNER_UUID: botDefinition.ownerUUID,
       NODE_ENV: clusterConfig.NODE_ENV,
       LOG_LEVEL: clusterConfig.LOG_LEVEL,
-      SENSAY_API_KEY: clusterConfig.SENSAY_API_URL,
-      SENSAY_ORGANIZATION_SECRET: clusterConfig.SENSAY_API_KEY.getSensitiveValue(),
+      SENSAY_API_URL: clusterConfig.SENSAY_API_URL,
+      SENSAY_API_KEY: clusterConfig.SENSAY_API_KEY.getSensitiveValue(),
+      SENTRY_DSN: clusterConfig.SENTRY_DSN,
+      SENTRY_TRACES_SAMPLERATE: clusterConfig.SENTRY_TRACES_SAMPLERATE,
+      SENTRY_TRACE_HEADER: sentryTraceHeader,
+      SENTRY_BAGGAGE_HEADER: sentryBaggageHeader,
       VERCEL_PROTECTION_BYPASS_KEY: clusterConfig.VERCEL_PROTECTION_BYPASS_KEY.getSensitiveValue(),
-    } satisfies Omit<Env, 'BOT_TOKEN'> & { BOT_TOKEN: string })
+      OPENAI_API_KEY: clusterConfig.OPENAI_API_KEY.getSensitiveValue(),
+      ELEVENLABS_API_KEY: clusterConfig.ELEVENLABS_API_KEY.getSensitiveValue(),
+    } satisfies Omit<Env, 'BOT_TOKEN' | 'OPENAI_API_KEY' | 'ELEVENLABS_API_KEY'> & {
+      BOT_TOKEN: string
+      OPENAI_API_KEY: string
+      ELEVENLABS_API_KEY: string
+    })
 
-    const ipcChannel = new BotIPCChannel(botDefinition, worker, logger)
-    await ipcChannel.waitForReadyEvent(config.healthCheckTimeoutMs)
-    return new BotHost(botDefinition, worker, ipcChannel, config, logger)
+    const botHost = new BotHost(botDefinition, worker, config)
+    await botHost.waitForReady()
+    return botHost
+  }
+
+  on<T extends WorkerEvent>(event: T, listener: (...args: WorkerEventMap[T]) => void) {
+    this.worker.on(event, listener)
   }
 
   async checkHealth(): Promise<boolean> {
@@ -74,20 +89,31 @@ export class BotHost {
   }
 
   async stop() {
-    this.worker.removeAllListeners()
-    this.worker.kill(Signal.SIGTERM)
+    try {
+      this.worker.removeAllListeners()
+      this.worker.kill(Signal.SIGTERM)
 
-    await this.waitForExit()
+      if (this.worker.isDead()) {
+        return
+      }
 
-    if (!this.worker.isDead()) {
-      this.worker.kill(Signal.SIGKILL)
+      // Ignore timeout error. It means that the worker didn't exit gracefully
+      await this.waitForExit().catch(() => {})
+    } finally {
+      if (!this.worker.isDead()) {
+        this.worker.kill(Signal.SIGKILL)
+      }
     }
+  }
+
+  private async waitForReady() {
+    await this.ipcChannel.waitForReadyEvent(this.config.healthCheckTimeoutMs)
   }
 
   private async waitForExit() {
     return await withTimeout((resolve) => {
-      const listener = (message: WorkerEventMap[WorkerEvent.EXIT]) => {
-        resolve(message)
+      const listener = (...args: WorkerEventMap[WorkerEvent.EXIT]) => {
+        resolve(args)
       }
 
       this.worker.on(WorkerEvent.EXIT, listener)

@@ -2,13 +2,14 @@ import type { BotDefinition } from './bot_definition'
 import { BotHost } from './bot_host'
 import { traceAll } from './logging/decorators'
 import type { Logger } from './logging/logger'
+import { WorkerEvent } from './types/worker'
 import { chaosTest } from './utils/chaos'
 
 type BotSupervisorConfig = {
   healthCheckTimeoutMs: number
   healthCheckIntervalMs: number
   gracefulShutdownTimeoutMs: number
-  maxFailedRestarts: number
+  maxFailedStartAttempts: number
   logger: Logger
 }
 
@@ -23,7 +24,9 @@ export enum BotStatus {
 export type BotStatusInfo = {
   replicaUUID: string
   replicaSlug?: string
+  ownerUUID: string
   status: BotStatus
+  pid?: number
 }
 
 /**
@@ -38,7 +41,7 @@ export class BotSupervisor {
   private botHost: BotHost | null = null
   private healthCheckIntervalID: NodeJS.Timeout | null = null
   private restartTimeoutID: NodeJS.Timeout | null = null
-  private failedRestarts = 0
+  private failedStartAttempts = 0
   private isHealthy = false
 
   constructor(
@@ -46,13 +49,17 @@ export class BotSupervisor {
     private readonly config: BotSupervisorConfig,
   ) {
     this.logger = config.logger.child({
-      module: `${BotSupervisor.name}(${this.botDefinition.replicaUUID})`,
+      module: BotSupervisor.name,
       replicaUUID: this.botDefinition.replicaUUID,
       replicaSlug: this.botDefinition.replicaSlug,
     })
   }
 
   get status(): BotStatus {
+    if (this.failedStartAttempts >= this.config.maxFailedStartAttempts) {
+      return BotStatus.FAILED
+    }
+
     if (!this.botHost || !this.botHost.isConnected) {
       return BotStatus.STOPPED
     }
@@ -61,11 +68,7 @@ export class BotSupervisor {
       return BotStatus.UNHEALTHY
     }
 
-    if (this.failedRestarts >= this.config.maxFailedRestarts) {
-      return BotStatus.FAILED
-    }
-
-    if (this.failedRestarts > 0) {
+    if (this.failedStartAttempts > 0) {
       return BotStatus.RESTARTING
     }
 
@@ -76,87 +79,96 @@ export class BotSupervisor {
     return {
       replicaUUID: this.botDefinition.replicaUUID,
       replicaSlug: this.botDefinition.replicaSlug,
+      ownerUUID: this.botDefinition.ownerUUID,
       status: this.status,
+      pid: this.botHost?.PID,
     }
   }
 
   async start(): Promise<void> {
+    this.logger.addBreadcrumb({ message: this.start.name })
+
     try {
       this.botHost = await BotHost.start(this.botDefinition, this.config)
-      this.isHealthy = await this.botHost.checkHealth()
+
+      this.botHost.on(WorkerEvent.EXIT, (code, signal) => {
+        this.logger.addBreadcrumb({ message: 'Worker exit', data: { code, signal } })
+        this.stop()
+        this.scheduleRestart()
+      })
+
+      this.botHost.on(WorkerEvent.ERROR, (err) => {
+        this.logger.addErrorBreadcrumb(err)
+        this.stop()
+        this.scheduleRestart()
+      })
+
       this.startHealthChecks()
+
+      this.isHealthy = await this.botHost.checkHealth()
     } catch (err) {
+      this.logger.error(err as Error, `Failed to start bot ${this.botDefinition.replicaSlug}`)
       this.isHealthy = false
-      this.logger.error(err as Error, `Error starting bot ${this.botDefinition.replicaSlug}`)
     }
+
+    if (this.isHealthy) {
+      this.failedStartAttempts = 0
+      return
+    }
+
+    this.failedStartAttempts++
+
+    if (this.failedStartAttempts < this.config.maxFailedStartAttempts) {
+      this.scheduleRestart()
+      return
+    }
+
+    this.logger.error(
+      `Failed to start bot ${this.botDefinition.replicaSlug} after ${this.failedStartAttempts} attempts`,
+    )
+
+    await this.stop()
   }
 
   async stop(): Promise<void> {
+    this.logger.addBreadcrumb({ message: this.stop.name })
+
     try {
       this.stopHealthChecks()
       await this.botHost?.stop()
       this.botHost = null
     } catch (err) {
-      this.logger.error(err as Error, `Error stopping bot ${this.botDefinition.replicaSlug}`)
+      this.logger.addErrorBreadcrumb(err as Error)
     }
   }
 
   private async restart(): Promise<void> {
-    try {
-      clearTimeout(this.restartTimeoutID ?? undefined)
-
-      await this.stop()
-
-      this.botHost = await BotHost.start(this.botDefinition, this.config)
-
-      this.isHealthy = await this.botHost.checkHealth()
-      if (this.isHealthy) {
-        this.failedRestarts = 0
-        this.startHealthChecks()
-        return
-      }
-
-      this.failedRestarts++
-
-      if (this.failedRestarts <= this.config.maxFailedRestarts) {
-        this.scheduleRestart()
-      } else {
-        await this.stop()
-      }
-    } catch (err) {
-      this.logger.error(err as Error, `Error restarting bot ${this.botDefinition.replicaSlug}`)
-    }
-  }
-
-  private scheduleRestart() {
-    if (this.failedRestarts > this.config.maxFailedRestarts) {
-      return
-    }
+    this.logger.addBreadcrumb({ message: this.restart.name })
 
     clearTimeout(this.restartTimeoutID ?? undefined)
 
-    this.restartTimeoutID = setTimeout(() => {
-      try {
-        this.restart()
-      } catch (err) {
-        this.logger.error(err as Error, `Error restarting bot ${this.botDefinition.replicaSlug}`)
-        this.failedRestarts++
-        this.scheduleRestart()
-      }
-    }, this.config.healthCheckIntervalMs)
+    await this.stop()
+    await this.start()
+  }
+
+  private scheduleRestart() {
+    clearTimeout(this.restartTimeoutID ?? undefined)
+    this.stopHealthChecks()
+
+    if (this.failedStartAttempts >= this.config.maxFailedStartAttempts) {
+      return
+    }
+
+    this.restartTimeoutID = setTimeout(() => this.restart(), this.config.healthCheckIntervalMs)
   }
 
   private startHealthChecks() {
-    this.healthCheckIntervalID = setInterval(() => {
-      try {
-        this.checkHealth()
-      } catch (err) {
-        this.logger.error(
-          err as Error,
-          `Error checking health for bot ${this.botDefinition.replicaSlug}`,
-        )
-      }
-    }, this.config.healthCheckIntervalMs)
+    this.stopHealthChecks()
+
+    this.healthCheckIntervalID = setInterval(
+      () => this.checkHealth(),
+      this.config.healthCheckIntervalMs,
+    )
   }
 
   private stopHealthChecks() {
@@ -164,22 +176,19 @@ export class BotSupervisor {
   }
 
   private async checkHealth(): Promise<void> {
-    if (!this.botHost) {
-      return
-    }
+    this.logger.addBreadcrumb({ message: this.checkHealth.name })
 
     try {
+      if (!this.botHost) {
+        return
+      }
+
       this.isHealthy = false
       this.isHealthy = await this.botHost.checkHealth()
     } catch (err) {
-      this.logger.error(
-        err as Error,
-        `Error checking health for bot ${this.botDefinition.replicaSlug}`,
-      )
-    } finally {
-      if (!this.isHealthy) {
-        this.restart()
-      }
+      this.logger.addErrorBreadcrumb(err as Error)
+
+      this.scheduleRestart()
     }
   }
 }

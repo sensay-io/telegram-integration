@@ -4,7 +4,6 @@ import { BotClient } from '@sensay/bot'
 import type { BotDefinition } from './bot_definition'
 import { BotWorker } from './bot_worker'
 import { config } from './config/worker'
-import { Logger } from './logging/logger'
 import { Event, Signal, process } from './types/process'
 
 /**
@@ -15,11 +14,13 @@ import { Event, Signal, process } from './types/process'
  * to use different environment variables for the bot process.
  */
 
-const logger = Logger.create({ level: config.LOG_LEVEL }).child({
+const logger = config.logger.child({
   module: path.basename(import.meta.filename),
+  replicaUUID: config.REPLICA_UUID,
+  replicaSlug: config.REPLICA_SLUG,
+  ownerUUID: config.OWNER_UUID,
+  PID: process.pid,
 })
-
-logger.info(`Starting worker. PID: ${process.pid}`)
 
 if (!cluster.isWorker || !cluster.worker) {
   logger.fatal('Bot worker must be initialized from a worker process')
@@ -30,19 +31,14 @@ const botDefinition = {
   token: config.BOT_TOKEN,
   replicaUUID: config.REPLICA_UUID,
   replicaSlug: config.REPLICA_SLUG,
-  ownerUuid: config.OWNER_UUID,
+  ownerUUID: config.OWNER_UUID,
 } satisfies BotDefinition
 
 const botClient = new BotClient(
   botDefinition.token.getSensitiveValue(),
   botDefinition.replicaUUID,
-  botDefinition.ownerUuid,
+  botDefinition.ownerUUID,
 )
-
-if (!config.isProduction && botDefinition.token.getSensitiveValue().startsWith('test')) {
-  logger.trace('Configuring test bot')
-  botClient.mock(config.isTesting)
-}
 
 const botWorker = new BotWorker(botDefinition, botClient, cluster.worker, logger)
 
@@ -55,7 +51,7 @@ const shutdown = (signal: Signal) => {
       process.exit(0)
     })
     .catch((error) => {
-      logger.error('Error shutting down bot worker', error)
+      logger.error(error, 'Error shutting down bot worker')
       process.exit(1)
     })
 }
@@ -72,3 +68,7 @@ process.on(Event.UNHANDLED_REJECTION, (error) => {
 })
 
 await botWorker.start()
+
+// The lack of any exports makes Sentry bundler plugin unhappy
+// https://github.com/getsentry/sentry-javascript-bundler-plugins/issues/471
+export default {}
