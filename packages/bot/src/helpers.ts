@@ -1,9 +1,9 @@
 import { env } from 'node:process'
 import type { AutoChatActionFlavor } from '@grammyjs/auto-chat-action'
 import type { FileFlavor } from '@grammyjs/files'
-import type { Context, RawApi } from 'grammy'
-import type { Other as OtherApi } from 'grammy/out/core/api.js'
-import type { Message, Update } from '@grammyjs/types'
+import type { Message, Update } from '@grammyjs/typesyjs/typesyjs/typesyjs/typesyjs/typesyjs/types'
+import type { Context, RawApirammy'
+import type { Other as OtherApipipipipipgrammyoout/core/api.jsre/api.jsre/api.jsre/api.jsre/api.jsre/api.js'
 
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateObject } from 'ai'
