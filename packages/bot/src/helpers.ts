@@ -5,10 +5,12 @@ import type { Other as OtherApi } from 'grammy/out/core/api.js'
 import type { Message, Update } from '@grammyjs/types'
 
 import { openai } from '@ai-sdk/openai'
-import { type LanguageModelUsage, generateObject } from 'ai'
+import { generateObject } from 'ai'
 import { codeBlock } from 'common-tags'
 import type { Methods } from 'grammy/out/core/client.js'
 import { z } from 'zod'
+import { sendError } from './responses'
+import { NonCriticalError } from './bot-actions'
 
 export function removeMentionIfNeeded(text: string, mention: string, reply?: boolean) {
   let messageText = text
@@ -25,12 +27,12 @@ export function removeMentionIfNeeded(text: string, mention: string, reply?: boo
   return messageText
 }
 
-export const hasUserRepliedToReplica = (chat: ParsedTelegramChat, mention: string) => {
-  if (!chat.reply) return false
+export const hasUserRepliedToReplica = (reply: ParsedTelegramChat['reply'], mention: string) => {
+  if (!reply) return false
 
-  const hasReplyContent = !!(chat.reply.text || chat.reply.voice || chat.reply.caption)
+  const hasReplyContent = !!(reply.text || reply.voice || reply.caption)
 
-  const isReplyFromMentionedUser = chat.reply.from === mention
+  const isReplyFromMentionedUser = reply.from === mention
 
   return hasReplyContent && isReplyFromMentionedUser
 }
@@ -39,8 +41,14 @@ export const hasUserRepliedToReplica = (chat: ParsedTelegramChat, mention: strin
 export function isPlanValid(overridePlan: boolean, userId: string) {
   if (overridePlan) return true
 
-  // const isAllowed = await isAllowedToUseFeature({ userId }, 'Telegram Copilot')
-  return true
+  const isAllowed = true
+
+  if (!isAllowed) {
+    throw new NonCriticalError(
+      'Please renew your subscription. https://www.sensay.io/pricing to visit Sensay pricing.',
+    )
+  }
+  return isAllowed
 }
 
 export type ReplyParameterType<M extends Methods<RawApi>, X extends string = never> = OtherApi<
@@ -112,57 +120,67 @@ export async function ctxReply(
   return await ctx.reply(escapeMarkdown(message), replyParameters)
 }
 
-export async function isUserAskingForSnsyTokenOrVoiceRecording(input: string) {
-  const personaSystemMessage = codeBlock`You are tasked with analyzing input to identify mentions of voice messages and SNSY token prices. Your goals are to determine whether the input includes a request made via a voice message and whether it discusses the price of the SNSY token.
+export async function voiceRequest(input: string) {
+  const personaSystemMessage = codeBlock`You are tasked with analyzing input to identify mentions of voice messages. Your goals are to determine whether the input includes a request made via a voice message.
 
- The object you will return will have this schema  {"voice":boolean, "token":boolean}.
+ The object you will return will have this schema  {"voice":boolean}.
 
-1. For voice messages:
+Voice messages:
   - Check the provided context for any mention of voice messages.
   - Return an object with key 'voice' indicating whether a voice message is discussed.
   - Example:
     - If they say "what is the price of the car" you will return '{"voice":false}'.
     - If they say "hey OpenAI, tell me what time it is with a voice message" you will return '{"voice":true}'.
 
-2. For SNSY token prices:
-  - Check the provided context for any mention of token prices, specifically focusing on the SNSY token.
-  - Return an object with key 'token' indicating whether the SNSY token price is discussed.
-  - Example:
-    - If they ask you in general what is the price and nothing else specific you will return '{"token":true}'.
-    - If they are not talking about the price you will return '{"token":false}'.
 
-Pay attention to the context to correctly identify whether a voice message or SNSY token price is being discussed. Return an object with both keys 'voice' and 'token' to indicate the presence of each.
+Pay attention to the context to correctly identify whether it is a voice message request. Return an object with key 'voice' in that case.
 
 Examples:
-- If they say "hey OpenAI, tell me what time it is with a voice message" you will return '{"voice":true, "token":false}'.
-- If they say "what is the price of the car" you will return '{"voice":false, "token":false}'.
-- If they say "what's the price of the SNSY token" you will return '{"voice":false, "token":true}'.
-- If they say "hey OpenAI, send me a voice message with the price of the SNSY token" you will return '{"voice":true, "token":true}'.
+- If they say "hey OpenAI, tell me what time it is with a voice message" you will return '{"voice":true}'.
+- If they say "what is the price of the car" you will return '{"voice":false}'.
+- If they say "what's the price of the SNSY token" you will return '{"voice":false}'.
+- If they say "hey, send me a voice message with the price of the SNSY token" you will return '{"voice":true}'.
  `
 
   const schema = z.object({
-    token: z.boolean(),
     voice: z.boolean(),
   })
 
-  const {
-    object,
-    usage,
-  }: { object: { token: boolean; voice: boolean }; usage: LanguageModelUsage } =
-    await generateObject({
-      model: openai('gpt-4o-mini'),
-      system: personaSystemMessage,
-      prompt: input,
-      schema,
-      temperature: 0.4,
-      maxTokens: 250,
-      mode: 'json',
-    })
+  const { object }: { object: { voice: boolean } } = await generateObject({
+    model: openai('gpt-4o-mini'),
+    system: personaSystemMessage,
+    prompt: input,
+    schema,
+    temperature: 0.4,
+    maxTokens: 250,
+    mode: 'json',
+  })
 
-  return { ...object, usage: usage }
+  return { ...object }
 }
 
-export function parse(message: Message & Update.NonChannel): ParsedTelegramChat {
+export function parse(
+  message: Message & Update.NonChannel,
+  ctx: FileFlavor<Context & AutoChatActionFlavor>,
+): ParsedTelegramChat | undefined {
+  const messageText = message.text || message.caption
+  const messageId = message.message_id
+  const chatId = message.chat.id
+  const messageThreadId = message.message_thread_id
+  const isTopicMessage = message.is_topic_message
+
+  if (!messageText) {
+    throw new NonCriticalError('No message was provided')
+  }
+
+  if (!chatId) {
+    throw new NonCriticalError('Failed to process message: Unable to identify chat.')
+  }
+
+  if (!messageId) {
+    throw new NonCriticalError('Failed to process message: Unable to identify message id.')
+  }
+
   const reply = message.reply_to_message
     ? {
         text: message.reply_to_message.text,
@@ -173,26 +191,32 @@ export function parse(message: Message & Update.NonChannel): ParsedTelegramChat 
     : undefined
 
   return {
-    first_name: message.from.first_name,
-    last_name: message.from.last_name,
+    messageText: messageText,
+    messageThreadId: messageThreadId,
+    isTopicMessage: isTopicMessage,
+    firstName: message.from.first_name,
+    lastName: message.from.last_name,
     username: message.from.username,
-    is_bot: message.from.is_bot,
-    user_id: message.from.id,
-    message_id: message.message_id,
-    chat_id: message.chat.id,
+    isBot: message.from.is_bot,
+    userId: message.from.id,
+    messageId: message.message_id,
+    chatId: message.chat.id,
     type: message.chat.type,
     reply,
   }
 }
 
 export type ParsedTelegramChat = {
-  first_name: string
-  last_name?: string
+  messageText: string
+  messageThreadId: number | undefined
+  isTopicMessage: boolean | undefined
+  firstName: string
+  lastName?: string
   username?: string
-  is_bot: boolean | null
-  user_id: number
-  message_id: number
-  chat_id: number
+  isBot: boolean | null
+  userId: number
+  messageId: number
+  chatId: number
   type: string
   reply:
     | {
@@ -202,4 +226,7 @@ export type ParsedTelegramChat = {
         caption: string | undefined
       }
     | undefined
+}
+function captureException(arg0: Error) {
+  throw new Error('Function not implemented.')
 }

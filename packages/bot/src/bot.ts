@@ -34,31 +34,43 @@ export class BotClient {
     await this.bot.init()
 
     this.bot.on('message', async (ctx, next) => {
-      const parsedMessage = parse(ctx.message)
-      if (parsedMessage.is_bot) return
-      if (!ctx.message.text) return
+      const parsedMessage = await parse(ctx.message, ctx)
+      if (!parsedMessage) return
+      const {
+        messageText,
+        messageId,
+        chatId,
+        messageThreadId,
+        type,
+        isBot,
+        userId,
+        username,
+        reply,
+      } = parsedMessage
+
+      if (isBot) return
 
       await checkAndCreateUser(ctx.from?.id.toString() || '')
 
-      const isReplicaTagged = ctx.message.text.includes(`@${this.bot.botInfo.username}`)
-      const isPrivateChat = parsedMessage.type === 'private'
+      const isReplicaTagged = messageText.includes(`@${this.bot.botInfo.username}`)
+      const isPrivateChat = type === 'private'
 
       const needsReplyByReplica =
-        hasUserRepliedToReplica(parsedMessage, ctx.me.username) || isReplicaTagged || isPrivateChat
+        hasUserRepliedToReplica(reply, ctx.me.username) || isReplicaTagged || isPrivateChat
 
       // Save message on database and dont respond
       if (!needsReplyByReplica) {
         await postV1ReplicasByReplicaUuidChatHistoryTelegram({
           path: { replicaUUID: this.replicaUuid },
           body: {
-            content: ctx.message.text,
+            content: messageText,
             telegram_data: {
-              chat_id: parsedMessage.chat_id,
-              chat_type: parsedMessage.type,
-              user_id: parsedMessage.user_id,
-              username: parsedMessage.username || '',
-              message_id: parsedMessage.message_id,
-              message_thread_id: ctx.message.message_thread_id,
+              chat_id: chatId,
+              chat_type: type,
+              user_id: userId,
+              username: username || '',
+              message_id: messageId,
+              message_thread_id: messageThreadId,
             },
           },
         })

@@ -5,17 +5,23 @@ import { apiThrottler } from '@grammyjs/transformer-throttler'
 import { Bot, type Context } from 'grammy'
 import type { Api, RawApi } from 'grammy'
 import {
-  ctxReply,
   isPlanValid,
   removeMentionIfNeeded,
   hasUserRepliedToReplica,
-  type ParsedTelegramChat,
   getReplyParameters,
   parse,
-  isUserAskingForSnsyTokenOrVoiceRecording,
+  voiceRequest,
 } from './helpers.js'
 import { sendError, sendMessage } from './responses.js'
 import { sendVoiceRecording } from './responses.js'
+
+export class NonCriticalError extends Error {
+  constructor(message: string) {
+    super(message)
+    Object.setPrototypeOf(this, NonCriticalError.prototype)
+    this.name = 'NonCriticalError'
+  }
+}
 
 export function initTelegramBot(token: string) {
   const bot = new Bot<FileFlavor<Context & AutoChatActionFlavor>>(token)
@@ -41,10 +47,6 @@ export function initTelegramBot(token: string) {
   return bot
 }
 
-const captureException = (error: unknown) => {
-  console.error(error)
-}
-
 export type HandleTelegramBotArgs = {
   bot: Bot<FileFlavor<Context & AutoChatActionFlavor>, Api<RawApi>>
   botUsername: string
@@ -64,454 +66,159 @@ export const botActions = ({
   needsReply,
   elevenlabsId,
 }: HandleTelegramBotArgs) => {
-  // We need vision from the api to process photos
-  // bot.on('message:photo', async (ctx) => {
-  //   const parsedMessage = parse(ctx.message)
-  //   if (parsedMessage.is_bot) return
-
-  //   const caption = ctx.message.caption
-  //   const isPrivateChat = parsedMessage.type === 'private'
-  //   const isBotMentioned = caption?.includes(`@${botUsername}`)
-  //   const isTopicMessage = ctx.message.is_topic_message
-
-  //   if (!parsedMessage.chat_id) {
-  //     await ctxReply(
-  //       `Chat id is null Error Id:${captureException(new Error('chat_id is null'))}`,
-  //       ctx,
-  //     )
-  //     return
-  //   }
-
-  //   if (!parsedMessage.message_id) {
-  //     await ctxReply(
-  //       `Message id is null Error Id:${captureException(new Error('chat_id is null'))}`,
-  //       ctx,
-  //     )
-  //     return
-  //   }
-
-  //   if (!isBotMentioned && !needsReply && !isPrivateChat) return
-
-  //   ctx.chatAction = 'typing'
-
-  //   const messageThreadId = ctx?.message?.message_thread_id
-  //   const replyParameters = getReplyParameters('private', {
-  //     needsReply,
-  //     messageId: parsedMessage.message_id,
-  //     messageThreadId,
-  //     isTopicMessage,
-  //     chatId: parsedMessage.chat_id,
-  //   })
-
-  //   try {
-  //     if (!caption) {
-  //       await sendError({
-  //         message: 'Caption is empty, please provide a message.',
-  //         needsReply,
-  //         messageId: parsedMessage.message_id,
-  //         chatId: parsedMessage.chat_id,
-  //         messageThreadId,
-  //         isTopicMessage,
-  //         ctx,
-  //         disableErrorCapture: true,
-  //       })
-  //       return
-  //     }
-
-  //     // we need vision here on the API
-  //     const fileUrl = (await ctx.getFile()).getUrl()
-  //     if (isPrivateChat) {
-  //       const text = await getTelegramResponse(replicaUuid, caption, {
-  //         content: '',
-  //         source: '',
-  //         skip_chat_history: false,
-  //         telegram_data: {
-  //           chat_type: '',
-  //           chat_id: '',
-  //           user_id: '',
-  //           username: '',
-  //           message_id: '',
-  //           message_thread_id: '',
-  //         },
-  //       })
-
-  //       await ctxReply(text, ctx, replyParameters)
-  //       return
-  //     }
-
-  //     const messageText = removeMentionIfNeeded(caption, botUsername, needsReply)
-
-  //     let text = await getTelegramResponse(replicaUuid, messageText, {
-  //       content: '',
-  //       source: '',
-  //       skip_chat_history: false,
-  //       telegram_data: {
-  //         chat_type: '',
-  //         chat_id: '',
-  //         user_id: '',
-  //         username: '',
-  //         message_id: '',
-  //         message_thread_id: '',
-  //       },
-  //     })
-
-  //     const mentionName = `@${parsedMessage.username}`
-  //     if (botUsername && !needsReply) text = `${mentionName} ${text}`
-
-  //     await ctxReply(text, ctx, replyParameters)
-  //   } catch (error) {
-  //     await sendError({
-  //       message: 'An error occurred, please contact Sensay with the error id.',
-  //       needsReply,
-  //       messageId: parsedMessage.message_id,
-  //       chatId: parsedMessage.chat_id,
-  //       isTopicMessage,
-  //       messageThreadId,
-  //       ctx,
-  //       error,
-  //     })
-
-  //     return
-  //   }
-  // })
-
-  bot.on('message::mention', async (ctx) => {
-    const messageThreadId = ctx.message.message_thread_id
-    const messageText = ctx.message.text || ctx.message.caption
-    const chat = parse(ctx.message)
-    const isTopicMessage = ctx.message.is_topic_message
-
+  bot.on('message::mention', async (ctx, next) => {
     try {
-      if (chat.is_bot) return
+      const parsedMessage = parse(ctx.message, ctx)
+      if (!parsedMessage) return
+      const { messageText, messageId, chatId, messageThreadId, isTopicMessage, isBot, type } =
+        parsedMessage
 
-      if (!messageText) {
-        await ctxReply('No message was provided', ctx)
+      if (type === 'private') {
+        // Private messages are handled in the on('message') event
+        await next()
+      }
+
+      if (isBot) return
+
+      const replyParameters = getReplyParameters('group', {
+        needsReply,
+        messageId,
+        messageThreadId,
+        chatId,
+        isTopicMessage,
+      })
+
+      const userMessage = removeMentionIfNeeded(messageText, botUsername, needsReply)
+
+      if (!userMessage) {
+        throw new NonCriticalError('No message was provided')
+      }
+
+      const { voice } = await voiceRequest(messageText)
+
+      if (voice) {
+        await sendVoiceRecording({
+          ctx: ctx,
+          parsedMessage,
+          messageText: userMessage,
+          replicaUuid,
+          elevenlabsId,
+          needsReply,
+          messageThreadId,
+          isTopicMessage,
+          replyParameters,
+        })
         return
       }
 
-      await publicMessageResponse({
-        isTopicMessage,
-        botUsername,
-        messageThreadId,
-        parsedMessage: chat,
-        overridePlan,
-        ownerUuid,
+      await sendMessage({
+        parsedMessage,
+        needsReply,
+        messageText: userMessage,
         replicaUuid,
-        text: messageText,
-        elevenlabsId,
-        ctx: ctx,
+        messageThreadId,
+        botUsername: botUsername,
+        ctx,
+        replyParameters,
+        isTopicMessage,
       })
       return
     } catch (err) {
       await sendError({
         message:
-          err instanceof Error
+          err instanceof NonCriticalError
             ? err.message
-            : 'An error occurred, please contact Sensay with the error id.',
+            : err instanceof Error
+              ? err.message
+              : 'An error occurred, please contact Sensay with the error id.',
         needsReply,
-        messageId: chat.message_id,
-        chatId: chat.chat_id,
-        messageThreadId,
-        isTopicMessage,
         ctx,
         error: err,
+        disableErrorCapture: err instanceof NonCriticalError,
       })
     }
   })
+
   bot.on('message', async (ctx) => {
-    const chat = parse(ctx.message)
-    const messageThreadId = ctx.message.message_thread_id
-    const isTopicMessage = ctx.message.is_topic_message
-    const messageText = ctx.message.text
-    const isPrivateChat = chat.type === 'private'
-
     try {
-      if (isPrivateChat) {
-        const chatId = chat.chat_id
-        const messageId = chat.message_id
+      const parsedMessage = parse(ctx.message, ctx)
+      if (!parsedMessage) return
 
-        if (!messageText) {
-          await sendError({
-            message: 'No message was provided',
-            needsReply: false,
-            messageId,
-            chatId,
-            messageThreadId,
-            isTopicMessage,
-            ctx,
-            disableErrorCapture: true,
-          })
-          return
-        }
+      const { messageText, messageId, chatId, messageThreadId, isTopicMessage, type, reply } =
+        parsedMessage
+      const isPrivateChat = type === 'private'
 
-        if (!chatId) {
-          await ctxReply(
-            `Failed to process message: Unable to identify chat. Error ID: ${captureException(new Error('Chat id doesnt exist'))}.`,
-            ctx,
-          )
-          return
-        }
+      const needsReply = hasUserRepliedToReplica(reply, botUsername)
+      if (!messageText.includes(`@${botUsername}`) && !needsReply && !isPrivateChat) return
 
-        if (!messageId) {
-          await ctxReply(
-            `Failed to process message: Unable to identify message id. Error ID: ${captureException(new Error('Message id doesnt exist'))}.`,
-            ctx,
-          )
-          return
-        }
+      ctx.chatAction = 'typing'
 
-        await replyToPrivateMessage({
-          isTopicMessage,
-          botUsername,
-          replicaUuid,
-          messageThreadId,
-          parsedMessage: chat,
-          overridePlan,
-          ownerUuid,
-          messageText,
-          elevenlabsId,
-          ctx: ctx,
-        })
+      isPlanValid(overridePlan, ownerUuid)
 
-        return
-      }
+      const { voice } = await voiceRequest(messageText)
 
-      if (!messageText) {
-        await ctxReply('No message was provided', ctx)
-        return
-      }
-
-      await publicMessageResponse({
-        isTopicMessage,
-        botUsername,
+      const chatType = isPrivateChat ? 'private' : 'group'
+      const replyParameters = getReplyParameters(chatType, {
+        needsReply,
+        messageId: messageId,
         messageThreadId,
-        parsedMessage: chat,
-        overridePlan,
-        ownerUuid,
-        replicaUuid,
-        text: messageText,
-        elevenlabsId,
-        ctx,
+        chatId: chatId,
+        isTopicMessage,
       })
+
+      if (voice) {
+        await sendVoiceRecording({
+          ctx: ctx,
+          parsedMessage,
+          messageText,
+          replicaUuid,
+          elevenlabsId,
+          needsReply,
+          messageThreadId,
+          isTopicMessage,
+          replyParameters,
+        })
+        return
+      }
+
+      let userMessage = messageText
+
+      if (!isPrivateChat) {
+        userMessage = removeMentionIfNeeded(messageText, botUsername, needsReply)
+
+        if (!userMessage) {
+          throw new NonCriticalError('No message was provided')
+        }
+      }
+
+      await sendMessage({
+        parsedMessage,
+        needsReply,
+        messageText: userMessage,
+        replicaUuid,
+        messageThreadId,
+        botUsername: botUsername,
+        ctx,
+        replyParameters,
+        isTopicMessage,
+      })
+
       return
     } catch (err) {
       await sendError({
         message:
-          err instanceof Error
+          err instanceof NonCriticalError
             ? err.message
-            : 'An error occurred, please contact Sensay with the error id.',
+            : err instanceof Error
+              ? err.message
+              : 'An error occurred, please contact Sensay with the error id.',
         needsReply,
-        messageId: chat.message_id,
-        chatId: chat.chat_id,
-        messageThreadId,
-        isTopicMessage,
         ctx,
         error: err,
+        disableErrorCapture: err instanceof NonCriticalError,
       })
     }
   })
 
   return bot
-}
-
-type ReplyToPrivateMessageArgs = {
-  parsedMessage: ParsedTelegramChat
-  replicaUuid: string
-  messageThreadId: number | undefined
-  botUsername: string
-  ownerUuid: string
-  overridePlan: boolean
-  isTopicMessage: boolean | undefined
-  messageText: string
-  elevenlabsId: string | null
-  ctx: FileFlavor<Context & AutoChatActionFlavor>
-}
-
-export async function replyToPrivateMessage({
-  botUsername,
-  parsedMessage,
-  replicaUuid,
-  messageThreadId,
-  overridePlan,
-  ownerUuid,
-  messageText,
-  isTopicMessage,
-  elevenlabsId,
-  ctx,
-}: ReplyToPrivateMessageArgs) {
-  const needsReply = hasUserRepliedToReplica(parsedMessage, botUsername)
-
-  ctx.chatAction = 'typing'
-
-  const hasValidPlan = await isPlanValid(overridePlan, ownerUuid)
-
-  if (!hasValidPlan) {
-    await sendError({
-      message:
-        'Please renew your subscription. https://www.sensay.io/pricing to visit Sensay pricing.',
-      needsReply: false,
-      messageId: parsedMessage.message_id,
-      chatId: parsedMessage.chat_id,
-      messageThreadId,
-      isTopicMessage,
-      ctx,
-      disableErrorCapture: true,
-    })
-    return
-  }
-
-  const replyParameters = getReplyParameters('private', {
-    needsReply,
-    messageId: parsedMessage.message_id,
-    messageThreadId,
-    isTopicMessage,
-    chatId: parsedMessage.chat_id,
-  })
-
-  const { voice, token, usage } = await isUserAskingForSnsyTokenOrVoiceRecording(messageText)
-
-  if (voice) {
-    if (!elevenlabsId) {
-      await ctxReply('Please provide a valid Elevenlabs ID', ctx, replyParameters)
-      return
-    }
-    await sendVoiceRecording({
-      ctx: ctx,
-      parsedMessage,
-      messageText,
-      replicaUuid,
-      elevenlabsId,
-      needsReply,
-      messageThreadId,
-      isTopicMessage,
-      replyParameters,
-    })
-    return
-  }
-
-  await sendMessage({
-    parsedMessage,
-    needsReply,
-    messageText,
-    replicaUuid,
-    requestedToken: token,
-    messageThreadId,
-    botUsername: '',
-    ctx,
-    usage,
-    replyParameters,
-  })
-  return
-}
-
-type ReplyToPublicMessageArgs = {
-  isTopicMessage: boolean | undefined
-  parsedMessage: ParsedTelegramChat
-  messageThreadId: number | undefined
-  botUsername: string
-  ownerUuid: string
-  overridePlan: boolean
-  replicaUuid: string
-  text: string
-  elevenlabsId: string | null
-  ctx: FileFlavor<Context & AutoChatActionFlavor>
-}
-
-export const publicMessageResponse = async ({
-  isTopicMessage,
-  parsedMessage,
-  messageThreadId,
-  botUsername,
-  overridePlan,
-  replicaUuid,
-  ctx,
-  ownerUuid,
-  text,
-  elevenlabsId,
-}: ReplyToPublicMessageArgs) => {
-  const needsReply = hasUserRepliedToReplica(parsedMessage, botUsername)
-
-  if (!text.includes(`@${botUsername}`) && !needsReply) return
-
-  ctx.chatAction = 'typing'
-
-  const messageTextWithoutMention = removeMentionIfNeeded(text, botUsername, needsReply)
-
-  if (!messageTextWithoutMention) {
-    await sendError({
-      message: 'No message was provided',
-      needsReply: false,
-      messageId: parsedMessage.message_id,
-      chatId: parsedMessage.chat_id,
-      messageThreadId,
-      isTopicMessage,
-      ctx,
-      disableErrorCapture: true,
-    })
-    await ctxReply('What can I do for you?', ctx)
-    return
-  }
-
-  const hasValidPlan = await isPlanValid(overridePlan, ownerUuid)
-
-  if (!hasValidPlan) {
-    await sendError({
-      message:
-        'Please renew your subscription. https://www.sensay.io/pricing to visit Sensay pricing.',
-      needsReply: false,
-      messageId: parsedMessage.message_id,
-      chatId: parsedMessage.chat_id,
-      messageThreadId,
-      isTopicMessage,
-      ctx,
-      disableErrorCapture: true,
-    })
-    return
-  }
-
-  const replyParameters = getReplyParameters('group', {
-    needsReply,
-    messageId: parsedMessage.message_id,
-    messageThreadId,
-    chatId: parsedMessage.chat_id,
-    isTopicMessage,
-  })
-
-  const { voice, token, usage } =
-    await isUserAskingForSnsyTokenOrVoiceRecording(messageTextWithoutMention)
-
-  if (replicaUuid && voice) {
-    if (!elevenlabsId) {
-      await ctxReply('Please provide a valid Elevenlabs ID', ctx, replyParameters)
-      return
-    }
-
-    await sendVoiceRecording({
-      ctx: ctx,
-      parsedMessage,
-      messageText: messageTextWithoutMention,
-      replicaUuid,
-      elevenlabsId,
-      needsReply,
-      messageThreadId,
-      isTopicMessage,
-      replyParameters,
-    })
-    return
-  }
-
-  await sendMessage({
-    parsedMessage,
-    needsReply,
-    messageText: messageTextWithoutMention,
-    replicaUuid,
-    requestedToken: token,
-    messageThreadId,
-    botUsername: botUsername,
-    ctx,
-    replyParameters,
-    usage,
-    isTopicMessage,
-  })
-  return
 }
