@@ -1,6 +1,6 @@
 # Sensay Telegram Integration
 
-A modular system for managing and orchestrating multiple Telegram bots at scale.
+Integration layer that enables Sensay Replicas to interact with users through Telegram, with built-in scalability and management features.
 
 ## Overview
 
