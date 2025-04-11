@@ -1,3 +1,5 @@
+import assert from 'node:assert'
+import dotenv from 'dotenv'
 import { z } from 'zod'
 import { ReplicaUUIDSchema } from './bot_definition'
 import { env } from './env'
