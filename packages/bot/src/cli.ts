@@ -2,7 +2,7 @@ import process from 'node:process'
 import { BotClient } from './bot'
 import { env } from './env'
 
-if (!env.BOT_TOKEN) {
+if (!env.BOT_TOKEN) { // TODO: MICHELE: only 1 env checked but more passed to the constructor of BotClient with no default?
   throw new Error('BOT_TOKEN is not defined')
 }
 
@@ -20,7 +20,7 @@ const stopBot = () => {
     })
 }
 
-process.on('SIGINT', stopBot)
-process.on('SIGTERM', stopBot)
+process.on('SIGINT', stopBot) // TODO: MICHELE: magic strings, if reused
+process.on('SIGTERM', stopBot) // TODO: MICHELE: magic strings, if reused
 
 bot.start()

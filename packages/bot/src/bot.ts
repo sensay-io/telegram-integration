@@ -53,7 +53,7 @@ export class BotClient {
       await checkAndCreateUser(ctx.from?.id.toString() || '')
 
       const isReplicaTagged = messageText.includes(`@${this.bot.botInfo.username}`)
-      const isPrivateChat = type === 'private' // TODO: MICHELE: magic string
+      const isPrivateChat = type === 'private' // TODO: MICHELE: magic string. Also DRY: it's in the types in helpers.ts
 
       const needsReplyByReplica =
         hasUserRepliedToReplica(reply, ctx.me.username) || isReplicaTagged || isPrivateChat

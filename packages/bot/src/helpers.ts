@@ -9,7 +9,6 @@ import { generateObject } from 'ai'
 import { codeBlock } from 'common-tags'
 import type { Methods } from 'grammy/out/core/client.js'
 import { z } from 'zod'
-import { sendError } from './responses'
 import { NonCriticalError } from './bot-actions'
 
 export function removeMentionIfNeeded(text: string, mention: string, reply?: boolean) {
@@ -37,7 +36,7 @@ export const hasUserRepliedToReplica = (reply: ParsedTelegramChat['reply'], ment
   return hasReplyContent && isReplyFromMentionedUser
 }
 
-// TODO: check from www the plan
+// TODO: check from www the plan  // TODO: MICHELE: WWW forbidden dependency? Should www be the one with the responsibiity? Let's discuss
 export function isPlanValid(overridePlan: boolean, userId: string) {
   if (overridePlan) return true
 
@@ -103,7 +102,10 @@ function escapeMarkdown(text: string): string {
     '!',
   ]
   // biome-ignore lint: i need backticks to use \ without prettier deleting it
-  const escapedText = text.replace(/_/g, `\\_`)
+  //const escapedText = text.replace(/_/g, `\\_`)
+
+  // testing testing: TODO: MICHELE:
+  const escapedText = text.replace(/_/g, '\\_')
 
   return specialChars.reduce((escapedText, char) => {
     // biome-ignore lint: i need backticks to use \ without prettier deleting it

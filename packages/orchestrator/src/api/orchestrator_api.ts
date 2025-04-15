@@ -15,7 +15,7 @@ import { botsPUT } from './bots/bots_put'
 const noopMiddleware: MiddlewareHandler = (c, next) => next()
 
 const API_TITLE = 'Sensay Telegram Bot Orchestrator'
-const API_VERSION = '2025-04-01'
+const API_VERSION = '2025-04-01'  // TODO: MICHELE: discuss
 
 export type OrchestratorAPIConfig = {
   authToken?: string

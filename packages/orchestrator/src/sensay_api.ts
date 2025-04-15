@@ -120,7 +120,7 @@ export class SensayAPIClient implements SensayAPI {
         'Content-Type': 'application/json',
         'User-Agent': 'Sensay-Bot-Orchestrator',
         'X-Organization-Secret': this.apiKey,
-        'X-API-Version': '2025-02-01',
+        'X-API-Version': '2025-02-01', // TODO: MICHELE: Switch to new version
       },
     })
 

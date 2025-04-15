@@ -40,7 +40,7 @@ export async function sendMessage({
   botUsername,
   ctx,
   replyParameters,
-  isTopicMessage = false,
+  isTopicMessage = false,  // TODO: MICHELE: unused?
 }: SendMessageArgs) {
   const completionResponse = await postV1ReplicasByReplicaUuidChatCompletionsTelegram({
     path: { replicaUUID: replicaUuid },
@@ -140,7 +140,7 @@ export const sendError = async ({
   }
 }
 
-//ignore for now
+// ignore for now
 const elevenLabs = new ElevenLabsClient({
   apiKey: env.ELEVENLABS_API_KEY,
 })

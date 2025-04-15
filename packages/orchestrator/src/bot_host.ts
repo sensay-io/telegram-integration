@@ -29,7 +29,7 @@ export class BotHost {
     private readonly worker: TypedWorker,
     private readonly ipcChannel: BotIPCChannel,
     private readonly config: BotHostConfig,
-    private readonly logger: Logger,
+    private readonly logger: Logger, // TODO: MICHELE: unused?
   ) {
     this.logger = logger.child({
       module: `${BotHost.name}(${this.botDefinition.replicaUUID})`,
