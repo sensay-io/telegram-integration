@@ -1,9 +1,9 @@
 import { env } from 'node:process'
 import type { AutoChatActionFlavor } from '@grammyjs/auto-chat-action'
 import type { FileFlavor } from '@grammyjs/files'
-import type { Message, Update } from '@grammyjs/typesyjs/typesyjs/typesyjs/typesyjs/typesyjs/types'
-import type { Context, RawApirammy'
-import type { Other as OtherApipipipipipgrammyoout/core/api.jsre/api.jsre/api.jsre/api.jsre/api.jsre/api.js'
+import type { Context, RawApi } from 'grammy'
+import type { Other as OtherApi } from 'grammy/out/core/api.js'
+import type { Message, Update } from '@grammyjs/types'
 
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateObject } from 'ai'
@@ -11,6 +11,7 @@ import { codeBlock } from 'common-tags'
 import type { Methods } from 'grammy/out/core/client.js'
 import { z } from 'zod'
 import { NonCriticalError } from './bot-actions'
+import removeMd from 'remove-markdown'
 
 export function removeMentionIfNeeded(text: string, mention: string, reply?: boolean) {
   const mentionWithSymbol = `@${mention}`
@@ -82,7 +83,7 @@ export async function ctxReply(
   ctx: FileFlavor<Context & AutoChatActionFlavor>,
   replyParameters?: ReplyParameterType<'sendMessage', 'text' | 'chat_id'>,
 ) {
-  return await ctx.reply(escapeMarkdown(message), replyParameters)
+  return await ctx.reply(removeMd(message), replyParameters)
 }
 
 export async function voiceRequest(input: string) {

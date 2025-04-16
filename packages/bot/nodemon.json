@@ -2,5 +2,5 @@
   "watch": ["src"],
   "ext": "ts",
   "ignore": ["src/**/*.spec.ts"],
-  "exec": "tsx src/cli.ts"
+  "exec": "tsx --env-file=.env.local src/cli.ts"
 }

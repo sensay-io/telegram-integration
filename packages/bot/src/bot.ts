@@ -30,7 +30,7 @@ export class BotClient {
   }
 
   async isHealthy() {
-    return this.bot.isInited() && this.bot.isRunning() && (await this.isStarted.promise)
+    return (await this.isStarted.promise) && this.bot.isInited() && this.bot.isRunning()
   }
 
   async start() {
@@ -66,6 +66,11 @@ export class BotClient {
       if (!needsReplyByReplica) {
         await postV1ReplicasByReplicaUuidChatHistoryTelegram({
           path: { replicaUUID: this.replicaUuid },
+          headers: {
+            ...commonHeaders,
+            'X-USER-ID': userId,
+            'X-USER-ID-TYPE': 'telegram',
+          },
           body: {
             content: messageText,
             telegram_data: {

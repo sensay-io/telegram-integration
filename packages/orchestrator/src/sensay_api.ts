@@ -1,8 +1,6 @@
-import assert from 'node:assert'
-import dotenv from 'dotenv'
 import { z } from 'zod'
 import { ReplicaUUIDSchema } from './bot_definition'
-import { env } from './env'
+import { env } from 'node:process'
 import { chaosTest } from './utils/chaos'
 
 class SensayAPIError extends Error {

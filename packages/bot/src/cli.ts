@@ -1,21 +1,20 @@
 import process from 'node:process'
 import { BotClient } from './bot'
-import { env } from '@sensay/orchestrator/src/env'
 import { Signal } from '@sensay/orchestrator/src/types/process'
 
-if (!env.BOT_TOKEN) {
+if (!process.env.BOT_TOKEN) {
   throw new Error('BOT_TOKEN is not defined')
 }
 
-if (!env.REPLICA_UUID) {
+if (!process.env.REPLICA_UUID) {
   throw new Error('REPLICA_UUID is not defined')
 }
 
-if (!env.OWNER_UUID) {
+if (!process.env.OWNER_UUID) {
   throw new Error('OWNER_UUID is not defined')
 }
 
-const bot = new BotClient(env.BOT_TOKEN, env.REPLICA_UUID, env.OWNER_UUID)
+const bot = new BotClient(process.env.BOT_TOKEN, process.env.REPLICA_UUID, process.env.OWNER_UUID)
 
 const stopBot = () => {
   bot

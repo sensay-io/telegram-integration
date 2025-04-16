@@ -119,6 +119,7 @@ export class BotSupervisor {
     this.failedStartAttempts++
 
     if (this.failedStartAttempts < this.config.maxFailedStartAttempts) {
+      this.logger.addBreadcrumb({ message: 'Bot is unhealthy, scheduling restart', data: { attempts: this.failedStartAttempts } })
       this.scheduleRestart()
       return
     }

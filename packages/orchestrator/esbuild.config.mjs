@@ -5,20 +5,24 @@ import * as esbuild from 'esbuild'
 await esbuild.build({
   entryPoints: ['src/index.ts', 'src/start_worker.ts'],
   outdir: 'dist',
-  bundle: true,
+  packages: 'bundle',
   target: 'node22',
   platform: 'node',
   format: 'esm',
-  packages: 'external',
+  bundle: true,
   keepNames: true,
   sourcemap: true,
+  banner: {
+    // https://github.com/evanw/esbuild/pull/2067#issuecomment-1152399288
+    js: "import { createRequire } from 'module'; const require = createRequire(import.meta.url);",
+  },
   plugins: [
     sentryEsbuildPlugin({
       authToken: process.env.SENTRY_AUTH_TOKEN,
       org: process.env.SENTRY_ORGANIZATION,
       project: process.env.SENTRY_PROJECT,
-      debug: true,
       telemetry: false,
+      debug: true,
       sourcemaps: {
         assets: ['dist/**/*.js', 'dist/**/*.js.map'],
       },
