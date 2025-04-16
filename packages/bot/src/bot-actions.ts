@@ -73,7 +73,7 @@ export const botActions = ({
       const { messageText, messageId, chatId, messageThreadId, isTopicMessage, isBot, type } =
         parsedMessage
 
-      if (type === 'private') {
+      if (type === 'private') { // TODO: Magic string, and below
         // Private messages are handled in the on('message') event
         await next()
       }
