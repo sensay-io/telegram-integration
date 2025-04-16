@@ -1,42 +1,173 @@
-import { Bot } from "grammy";
+import type { AutoChatActionFlavor } from '@grammyjs/auto-chat-action'
+import type { FileFlavor } from '@grammyjs/files'
+import type { Api, Bot, Context, RawApi } from 'grammy'
+import { botActions } from './bot-actions'
+import { hasUserRepliedToReplica } from './helpers'
+import { parse } from './helpers'
+import { getV1UsersMe, postV1ReplicasByReplicaUuidChatHistoryTelegram } from '../../client/sdk.gen'
+import { initTelegramBot } from './bot-actions'
+import { env } from 'node:process'
+import assert from 'node:assert'
 
-export const initializeBotClient = async (token: string) => {
-  try {
-    console.log("Initializing bot", token);
+const SENSAY_API_KEY = env.SENSAY_API_KEY
+const SENSAY_ORGANIZATION_SECRET = env.SENSAY_ORGANIZATION_SECRET
+const VERCEL_PROTECTION_BYPASS_KEY = env.VERCEL_PROTECTION_BYPASS_KEY
 
-    const bot = new Bot(token);
+type MyContext = FileFlavor<Context & AutoChatActionFlavor>
+type MyBot = Bot<MyContext, Api<RawApi>>
 
-    if (process.env.NODE_ENV === "development" && token === "test") {
-      console.log("Configurint test bot");
+export class BotClient {
+  private readonly bot: MyBot
+  private readonly replicaUuid: string
+  private readonly ownerUuid: string
 
-      bot.botInfo = {
-        id: 42,
-        first_name: "Test Bot",
-        is_bot: true,
-        username: "test_bot",
-        can_join_groups: true,
-        can_read_all_group_messages: true,
-        can_connect_to_business: true,
-        has_main_web_app: true,
-        supports_inline_queries: false,
-      };
-
-      bot.api.config.use(() => {
-        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-        return { ok: true } as any;
-      });
-    }
-
-    bot.on("message", async (ctx) => {
-      await ctx.reply(`Hello from ${ctx.me.username}!`);
-    });
-
-    await bot.start({
-      onStart: (botInfo) => {
-        console.log(`@${botInfo.username} is running `);
-      },
-    });
-  } catch (err) {
-    throw new Error("Failed to initialize bot", { cause: err });
+  constructor(botToken: string, replicaUuid: string, ownerUuid: string) {
+    this.replicaUuid = replicaUuid
+    this.ownerUuid = ownerUuid
+    this.bot = initTelegramBot(botToken)
   }
-};
+
+  isHealthy() {
+    return this.bot.isInited() && this.bot.isRunning()
+  }
+
+  async start() {
+    await this.bot.init()
+
+    this.bot.on('message', async (ctx, next) => {
+      const parsedMessage = parse(ctx.message, ctx)
+      if (!parsedMessage) return
+      const {
+        messageText,
+        messageId,
+        chatId,
+        messageThreadId,
+        type,
+        isBot,
+        userId,
+        username,
+        reply,
+      } = parsedMessage
+
+      if (isBot) return
+
+      assert(ctx.from !== undefined)
+      await createUserIfNotExist(ctx.from.id.toString())
+
+      const isReplicaTagged = messageText.includes(`@${this.bot.botInfo.username}`)
+      const isPrivateChat = type === 'private' // TODO: MICHELE: magic string. Also DRY: it's in the types in helpers.ts
+      const isReplyToReplica = hasUserRepliedToReplica(reply, ctx.me.username)
+
+      const needsReplyByReplica = isReplyToReplica || isReplicaTagged || isPrivateChat
+
+      // Save message on database and don't respond
+      if (!needsReplyByReplica) {
+        await postV1ReplicasByReplicaUuidChatHistoryTelegram({
+          path: { replicaUUID: this.replicaUuid },
+          body: {
+            content: messageText,
+            telegram_data: {
+              chat_id: chatId,
+              chat_type: type,
+              user_id: userId,
+              username: username || '',
+              message_id: messageId,
+              message_thread_id: messageThreadId,
+            },
+          },
+        })
+        return
+      }
+
+      await next()
+    })
+
+    botActions({
+      bot: this.bot,
+      botUsername: this.bot.botInfo.username,
+      replicaUuid: this.replicaUuid,
+      overridePlan: false,
+      ownerUuid: this.ownerUuid,
+      elevenlabsId: null,
+      needsReply: true,
+    })
+
+    this.bot.catch((err) => {
+      console.error('Unhandled error', err)
+    })
+
+    this.bot.start({ // Don't await bot.start method. It blocks until the bot is stopped. https://grammy.dev/ref/core/bot#start
+      onStart: (botInfo) => {
+        console.log(`@${botInfo.username} is running\n`)
+      },
+    })
+  }
+
+  async stop() {
+    await this.bot.stop()
+  }
+}
+
+interface ErrorResponse {
+  error?: string
+  message?: string
+}
+
+async function createUserIfNotExist(userId: string) {
+  // First, try to get the user using the users/me endpoint
+  const getUserResponse = await getV1UsersMe({
+    headers: {
+      'Content-Type': 'application/json', // TODO: MICHELE: DRY: Use a common function to create all these headers, so we don't repeat ourselves
+      'X-ORGANIZATION-SECRET': SENSAY_ORGANIZATION_SECRET || '',
+      'X-USER-ID': userId,
+      'X-USER-ID-TYPE': 'telegram',
+      'x-vercel-protection-bypass': VERCEL_PROTECTION_BYPASS_KEY || '',
+    },
+  })
+
+  // If the response is successful, the user exists
+  if (getUserResponse.response.ok) {
+    return getUserResponse.data
+  }
+
+  // If we get a 401 error, the user doesn't exist and we need to create them
+  if (getUserResponse.response.status === 401) {
+    return await createUser(userId)
+  }
+
+  // For other error statuses, throw an error
+  throw new Error(`Unexpected error in getUserResponse for userId: ${userId}`, { cause: getUserResponse })
+}
+
+async function createUser(userId: string) {
+  const createUserResponse = await fetch(`${SENSAY_API_KEY}/v1/users`, {  // TODO: switch to SDK
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-ORGANIZATION-SECRET': SENSAY_ORGANIZATION_SECRET || '',
+      'x-vercel-protection-bypass': VERCEL_PROTECTION_BYPASS_KEY || '',  // Needed to connect to non-production environments
+    },
+    body: JSON.stringify({
+      IDs: [
+        {
+          userID: userId,
+          userIDType: 'telegram', // TODO: MICHELE: magic string. Is it not generated by the SDK?
+        },
+      ],
+    }),
+  })
+
+  if (!createUserResponse.ok) {
+    throw new Error(`Unexpected error in createUserResponse for userId: ${userId}`, { cause: createUserResponse })
+  }
+  
+  return await createUserResponse.json()
+}
+
+function logUnexpectedResponse(response: Response, action: string) {
+  // TODO: Move to Common
+  // TODO: Use Sentry/Pino here
+  console.error(`Unexpected response when ${action}: ${response.status} ${response.statusText}`)
+  console.error('Headers:', Object.fromEntries(response.headers))
+  console.error('Body:', response.body)
+}

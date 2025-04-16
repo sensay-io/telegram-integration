@@ -1,27 +1,63 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-  "formatter": {
-    "indentStyle": "space",
-    "indentWidth": 2
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
   },
-  "organizeImports": {
-    "enabled": true
+  "files": {
+    "ignore": [
+      "./api/index.js",
+      "./tdlib-types.d.ts",
+      "./vercel.json",
+      "./db/supabase.types.ts",
+      "./src/env.ts",
+      "./renovate.json",
+      "./.vercel/**/*"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "lineWidth": 100
   },
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true
+      "recommended": true,
+      "nursery": {
+        "noProcessEnv": "error"
+      },
+      "correctness": {
+        "noUnusedImports": {
+          "level": "warn",
+          "fix": "none"
+        }
+      },
+      "style": {
+        // we should at least specifically ignore the line and raise this to error
+        "noNonNullAssertion": {
+          "level": "info",
+          "fix": "none"
+        }
+      },
+      "suspicious": {
+        "useAwait": "error"
+      }
     }
   },
-  "files": {
-    "ignore": ["node_modules", "dist"]
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "semicolons": "asNeeded"
+    }
   },
   "overrides": [
     {
       // Biome treats tsconfig.json files in a special way,
       // but only if file name is exactly tsconfig.json.
       // https://biomejs.dev/guides/configure-biome/#well-known-files
-      "include": ["tsconfig.base.json"],
+      "include": ["tsconfig.*.json"],
       "json": {
         "parser": {
           "allowComments": true
