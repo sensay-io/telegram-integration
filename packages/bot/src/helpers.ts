@@ -36,7 +36,7 @@ export const hasUserRepliedToReplica = (reply: ParsedTelegramChat['reply'], ment
   return hasReplyContent && isReplyFromMentionedUser
 }
 
-// TODO: check from www the plan  // TODO: MICHELE: WWW forbidden dependency? Should www be the one with the responsibiity? Let's discuss
+// TODO: check from www the plan  // TODO: MICHELE: WWW forbidden dependency? Should www be the one with the responsibiity? To be discussed as things might change. Michele needs to talk with Aleksander
 export function isPlanValid(overridePlan: boolean, userId: string) {
   if (overridePlan) return true
 

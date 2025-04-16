@@ -2,11 +2,21 @@ import process from 'node:process'
 import { BotClient } from './bot'
 import { env } from './env'
 
-if (!env.BOT_TOKEN) { // TODO: MICHELE: only 1 env checked but more passed to the constructor of BotClient with no default?
+if (!env.BOT_TOKEN) { // TODO: MICHELE: unify with env from orchestrator (move to common?)
   throw new Error('BOT_TOKEN is not defined')
 }
 
-const bot = new BotClient(env.BOT_TOKEN, env.REPLICA_UUID, env.BOT_VERSION)
+if (!env.REPLICA_UUID) { // TODO: MICHELE: unify with env from orchestrator (move to common?)
+  throw new Error('REPLICA_UUID is not defined')
+}
+
+if (!env.OWNER_UUID) { // TODO: MICHELE: unify with env from orchestrator (move to common?)
+  throw new Error('OWNER_UUID is not defined')
+}
+
+const bot = new BotClient(env.BOT_TOKEN, env.REPLICA_UUID, env.OWNER_UUID)
+
+// TODO: MICHELE: Needs testing
 
 const stopBot = () => {
   bot

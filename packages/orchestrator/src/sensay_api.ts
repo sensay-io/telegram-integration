@@ -115,7 +115,7 @@ export class SensayAPIClient implements SensayAPI {
     url: URL,
     responseSchema: z.ZodObject<TSchema>,
   ): Promise<z.infer<typeof responseSchema> | null> {
-    const response = await fetch(url, {
+    const response = await fetch(url, { // TODO: MICHELE: switch to sdk
       headers: {
         'Content-Type': 'application/json',
         'User-Agent': 'Sensay-Bot-Orchestrator',
