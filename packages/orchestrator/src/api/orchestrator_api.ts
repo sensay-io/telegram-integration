@@ -111,7 +111,7 @@ export class OrchestratorAPI {
       ),
     )
 
-    const bearerAuthSchemeName = 'BearerAuth'
+    const authSchemeName = 'Bearer'
 
     app.doc31('/schema', () => ({
       openapi: '3.0.0',
@@ -119,15 +119,15 @@ export class OrchestratorAPI {
         title: API_TITLE,
         version: API_VERSION,
       },
-      security: [{ [bearerAuthSchemeName]: [] }],
+      security: [{ [authSchemeName]: [] }],
     }))
 
-    app.openAPIRegistry.registerComponent('securitySchemes', bearerAuthSchemeName, {
+    app.openAPIRegistry.registerComponent('securitySchemes', authSchemeName, {
       type: 'http',
-      scheme: bearerAuthSchemeName,
+      scheme: authSchemeName,
       in: 'header',
-      name: 'Authorization',
-      description: 'Bearer token',
+      name: 'X-API-Key',
+      description: 'API Key for authentication',
     })
 
     app.get('/ui', swaggerUI({ url: '/schema' }))

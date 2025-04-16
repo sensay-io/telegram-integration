@@ -4,9 +4,6 @@ import { limit } from '@grammyjs/ratelimiter'
 import { apiThrottler } from '@grammyjs/transformer-throttler'
 import { Bot, type Context } from 'grammy'
 import type { Api, RawApi } from 'grammy'
-import { PRIVATE_CHAT } from './constants'
-import { PRIVATE_CHAT } from './constants'
-import { PRIVATE_CHAT } from './constants'
 import {
   getReplyParameters,
   hasUserRepliedToReplica,
@@ -14,7 +11,11 @@ import {
   parse,
   removeMentionIfNeeded,
   voiceRequest
-} from './helpers.js'/responseponses.js'
+} from './helpers.js'
+import { sendError, sendMessage } from './responses.js'
+import { sendVoiceRecording } from './responses.js'
+import { PRIVATE_CHAT } from './constants'
+
 export class NonCriticalError extends Error {
   constructor(message: string) {
     super(message)
@@ -24,11 +25,7 @@ export class NonCriticalError extends Error {
 }
 
 export function initTelegramBot(token: string) {
-  const bot = new Bot<FileFlavor<Context & AutoChatActionFlavor>>(token, {
-    // client: {
-    //   apiRoot: 'http://locahost:3999',
-    // },
-  })
+  const bot = new Bot<FileFlavor<Context & AutoChatActionFlavor>>(token)
 
   const throttler = apiThrottler()
 
@@ -207,7 +204,7 @@ export const botActions = ({
         messageText: userMessage,
         replicaUuid,
         messageThreadId,
-        botUsername: botUsername,
+        botUsername: isPrivateChat ? '' : botUsername,
         ctx,
         replyParameters,
         isTopicMessage,

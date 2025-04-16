@@ -1,5 +1,4 @@
-import { env } from '@sensay/orchestrator/src/env'
-
+import { env } from 'node:process'
 import { ElevenLabsClient } from 'elevenlabs'
 import { InputFile } from 'grammy'
 import removeMd from 'remove-markdown'
@@ -9,6 +8,7 @@ import { ctxReply } from './helpers'
 import { getReplyParameters } from './helpers'
 import { captureException } from './helpers'
 import type { SendErrorArgs, SendMessageArgs, SendVoiceRecordingArgs } from './types/responses'
+import { commonHeaders } from './constants'
 
 export async function sendMessage({
   parsedMessage,
@@ -22,6 +22,11 @@ export async function sendMessage({
 }: SendMessageArgs) {
   const completionResponse = await postV1ReplicasByReplicaUuidChatCompletionsTelegram({
     path: { replicaUUID: replicaUuid },
+    headers: {
+      ...commonHeaders,
+      'X-USER-ID': ctx.from?.id.toString() || '',
+      'X-USER-ID-TYPE': 'telegram',
+    },
     body: {
       content: messageText,
       skip_chat_history: false,

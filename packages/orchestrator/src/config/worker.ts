@@ -30,7 +30,10 @@ function createConfig() {
   if (parsed.success) {
     if (parsed.data.NODE_ENV !== Environment.TEST) {
       logger.trace('Environment validation passed:')
-      logger.table(Object.entries(parsed.data))
+      logger.table(
+        // Don't print SENTRY_BAGGAGE_HEADER. It messes up the output and is rarely useful.
+        Object.entries(parsed.data).filter(([key]) => !key.startsWith('SENTRY_BAGGAGE_HEADER')),
+      )
     }
   } else {
     logger.fatal('Environment validation failed:')

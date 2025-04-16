@@ -6,6 +6,8 @@
   "author": "Sensay",
   "description": "Sensay Telegram integration",
   "keywords": ["bots", "telegram", "sensay"],
+  "private": true,
+  "workspaces": ["packages/*"],
   "engines": {
     "node": "22.x"
   },
@@ -13,7 +15,7 @@
     "build": "npm run build:bot && npm run build:orc",
     "build:bot": "npm run build -w packages/bot",
     "build:orc": "npm run build -w packages/orchestrator",
-    "start": "npm run start -ws --if-present",
+    "start": "npm run start -w packages/orchestrator",
     "dev:bot": "npm run dev -w packages/bot",
     "dev:orc": "npm run build && npm run dev -w packages/orchestrator",
     "dev:bun": "bun --filter orchestrator dev",
@@ -33,10 +35,10 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
+    "@sentry/esbuild-plugin": "^3.3.1",
     "@types/node": "^22.13.11",
     "lint-staged": "^15.5.0",
     "tsx": "^4.19.3",
     "typescript": "^5.8.2"
-  },
-  "workspaces": ["packages/*"]
+  }
 }
