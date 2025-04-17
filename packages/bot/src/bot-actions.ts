@@ -14,7 +14,7 @@ import {
 } from './helpers.js'
 import { sendError, sendMessage } from './responses.js'
 import { sendVoiceRecording } from './responses.js'
-
+import { PRIVATE_CHAT } from './constants'
 export class NonCriticalError extends Error {
   constructor(message: string) {
     super(message)
@@ -54,7 +54,6 @@ export type HandleTelegramBotArgs = {
   overridePlan: boolean
   ownerUuid: string
   elevenlabsId: string | null
-  needsReply: boolean
 }
 
 export const botActions = ({
@@ -63,17 +62,27 @@ export const botActions = ({
   replicaUuid,
   overridePlan,
   ownerUuid,
-  needsReply,
   elevenlabsId,
 }: HandleTelegramBotArgs) => {
   bot.on('message::mention', async (ctx, next) => {
     try {
-      const parsedMessage = parse(ctx.message, ctx)
-      if (!parsedMessage) return
-      const { messageText, messageId, chatId, messageThreadId, isTopicMessage, isBot, type } =
-        parsedMessage
+      const parsedMessage = parse(ctx.message)
 
-      if (type === 'private') { // TODO: Magic string, and below
+      if (!parsedMessage) return
+      const {
+        messageText,
+        messageId,
+        chatId,
+        messageThreadId,
+        isTopicMessage,
+        isBot,
+        type,
+        reply,
+      } = parsedMessage
+
+      const needsReply = hasUserRepliedToReplica(reply, botUsername)
+
+      if (type === PRIVATE_CHAT) {
         // Private messages are handled in the on('message') event
         await next()
       }
@@ -131,7 +140,6 @@ export const botActions = ({
             : err instanceof Error
               ? err.message
               : 'An error occurred, please contact Sensay with the error id.',
-        needsReply,
         ctx,
         error: err,
         disableErrorCapture: err instanceof NonCriticalError,
@@ -141,7 +149,7 @@ export const botActions = ({
 
   bot.on('message', async (ctx) => {
     try {
-      const parsedMessage = parse(ctx.message, ctx)
+      const parsedMessage = parse(ctx.message)
       if (!parsedMessage) return
 
       const { messageText, messageId, chatId, messageThreadId, isTopicMessage, type, reply } =
@@ -183,12 +191,10 @@ export const botActions = ({
 
       let userMessage = messageText
 
-      if (!isPrivateChat) {
-        userMessage = removeMentionIfNeeded(messageText, botUsername, needsReply)
+      userMessage = removeMentionIfNeeded(messageText, botUsername, needsReply)
 
-        if (!userMessage) {
-          throw new NonCriticalError('No message was provided')
-        }
+      if (!userMessage) {
+        throw new NonCriticalError('No message was provided')
       }
 
       await sendMessage({
@@ -212,7 +218,6 @@ export const botActions = ({
             : err instanceof Error
               ? err.message
               : 'An error occurred, please contact Sensay with the error id.',
-        needsReply,
         ctx,
         error: err,
         disableErrorCapture: err instanceof NonCriticalError,

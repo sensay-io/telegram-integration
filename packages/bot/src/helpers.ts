@@ -12,18 +12,13 @@ import { z } from 'zod'
 import { NonCriticalError } from './bot-actions'
 
 export function removeMentionIfNeeded(text: string, mention: string, reply?: boolean) {
-  let messageText = text
-
   const mentionWithSymbol = `@${mention}`
 
-  if (mentionWithSymbol) {
-    const regex = new RegExp(mention, 'g')
-    return messageText.replace(regex, '').trim()
+  if (mention) {
+    const regex = new RegExp(mentionWithSymbol, 'g')
+    return text.replace(regex, '').replace(/\s+/g, ' ').trim()
   }
-
-  if (!reply) messageText = messageText.split(' ').slice(1).join(' ')
-
-  return messageText
+  return text
 }
 
 export const hasUserRepliedToReplica = (reply: ParsedTelegramChat['reply'], mention: string) => {
@@ -81,39 +76,6 @@ export function getReplyParameters(
   return { parse_mode: 'Markdown' }
 }
 
-function escapeMarkdown(text: string): string {
-  const specialChars = [
-    '*',
-    '[',
-    ']',
-    '(',
-    ')',
-    '~',
-    '`',
-    '>',
-    '#',
-    '+',
-    '-',
-    '=',
-    '|',
-    '{',
-    '}',
-    '.',
-    '!',
-  ]
-  // biome-ignore lint: i need backticks to use \ without prettier deleting it
-  //const escapedText = text.replace(/_/g, `\\_`)
-
-  // testing testing: TODO: MICHELE:
-  const escapedText = text.replace(/_/g, '\\_')
-
-  return specialChars.reduce((escapedText, char) => {
-    // biome-ignore lint: i need backticks to use \ without prettier deleting it
-    const regex = new RegExp(`\${char}`, 'g')
-    return escapedText.replace(regex, `\\${char}`)
-  }, escapedText)
-}
-
 export async function ctxReply(
   message: string,
   ctx: FileFlavor<Context & AutoChatActionFlavor>,
@@ -161,10 +123,7 @@ Examples:
   return { ...object }
 }
 
-export function parse(
-  message: Message & Update.NonChannel,
-  ctx: FileFlavor<Context & AutoChatActionFlavor>,
-): ParsedTelegramChat | undefined {
+export function parse(message: Message & Update.NonChannel): ParsedTelegramChat | undefined {
   const messageText = message.text || message.caption
   const messageId = message.message_id
   const chatId = message.chat.id
@@ -219,16 +178,46 @@ export type ParsedTelegramChat = {
   userId: number
   messageId: number
   chatId: number
-  type: string
-  reply:
-    | {
-        text: string | undefined
-        from: string | undefined
-        voice: boolean | undefined
-        caption: string | undefined
-      }
-    | undefined
+  type: 'private' | 'group' | 'supergroup'
+  reply?: {
+    text: string | undefined
+    from: string | undefined
+    voice: boolean | undefined
+    caption: string | undefined
+  }
 }
-function captureException(arg0: Error) {
-  throw new Error('Function not implemented.')
+
+export const captureException = (error: Error, extra?: unknown) => {
+  console.error(error, extra)
+}
+
+export function escapeMarkdown(text: string): string {
+  const specialChars = [
+    '*',
+    '[',
+    ']',
+    '(',
+    ')',
+    '~',
+    '`',
+    '>',
+    '#',
+    '+',
+    '-',
+    '=',
+    '|',
+    '{',
+    '}',
+    '.',
+    '!',
+  ]
+
+  // First escape underscores
+  const escapedText = text.replace(/_/g, '\\_')
+
+  // Then escape all other special characters
+  return specialChars.reduce((escapedText, char) => {
+    const regex = new RegExp(`\\${char}`, 'g')
+    return escapedText.replace(regex, `\\${char}`)
+  }, escapedText)
 }

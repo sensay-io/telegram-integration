@@ -1,35 +1,14 @@
-import { env } from './env'
+import { env } from '@sensay/orchestrator/src/env'
 
-import type { AutoChatActionFlavor } from '@grammyjs/auto-chat-action'
-import type { FileFlavor } from '@grammyjs/files'
-import type { LanguageModelUsage } from 'ai'
 import { ElevenLabsClient } from 'elevenlabs'
-import type { Context } from 'grammy'
 import { InputFile } from 'grammy'
-import type { Methods, RawApi } from 'grammy/out/core/client'
 import removeMd from 'remove-markdown'
-import type { ReplyParameterType } from './helpers'
 import { ctxReply } from './helpers'
-import { type ParsedTelegramChat, getReplyParameters } from './helpers'
+import { getReplyParameters } from './helpers'
 import { postV1ReplicasByReplicaUuidChatCompletionsTelegram } from '../../client/sdk.gen'
 import { NonCriticalError } from './bot-actions'
-
-const captureException = (error: Error, extra?: unknown) => {
-  console.error(error, extra)
-}
-
-type SendMessageArgs = {
-  parsedMessage: ParsedTelegramChat
-  needsReply: boolean
-  messageText: string
-  replicaUuid: string
-  messageThreadId: number | undefined
-  botUsername: string
-  ctx: FileFlavor<Context & AutoChatActionFlavor>
-  replyParameters: ReplyParameterType<Methods<RawApi>>
-  isTopicMessage?: boolean
-  usage?: LanguageModelUsage | undefined
-}
+import type { SendMessageArgs, SendErrorArgs, SendVoiceRecordingArgs } from './types/responses'
+import { captureException } from './helpers'
 
 export async function sendMessage({
   parsedMessage,
@@ -40,7 +19,6 @@ export async function sendMessage({
   botUsername,
   ctx,
   replyParameters,
-  isTopicMessage = false,  // TODO: MICHELE: unused?
 }: SendMessageArgs) {
   const completionResponse = await postV1ReplicasByReplicaUuidChatCompletionsTelegram({
     path: { replicaUUID: replicaUuid },
@@ -75,7 +53,6 @@ export async function sendMessage({
     await sendError({
       message:
         'An error occurred with sending your message, please contact Sensay with the error id.',
-      needsReply,
       ctx,
       error: err,
       extraErrorInformation: {
@@ -89,18 +66,8 @@ export async function sendMessage({
   return
 }
 
-type SendErrorArgs = {
-  message: string
-  needsReply: boolean
-  ctx: FileFlavor<Context & AutoChatActionFlavor>
-  error?: unknown
-  disableErrorCapture?: boolean
-  extraErrorInformation?: { [key: string]: string }
-}
-
 export const sendError = async ({
   message,
-  needsReply,
   ctx,
   error,
   disableErrorCapture,
@@ -118,7 +85,7 @@ export const sendError = async ({
     let messageResponse = message
 
     const replyObject = getReplyParameters('private', {
-      needsReply,
+      needsReply: true,
       messageId: ctx.message.message_id,
       isTopicMessage: ctx.message.is_topic_message,
       messageThreadId: ctx.message.message_thread_id,
@@ -144,18 +111,6 @@ export const sendError = async ({
 const elevenLabs = new ElevenLabsClient({
   apiKey: env.ELEVENLABS_API_KEY,
 })
-
-type SendVoiceRecordingArgs = {
-  ctx: FileFlavor<Context & AutoChatActionFlavor>
-  parsedMessage: ParsedTelegramChat
-  messageText: string
-  replicaUuid: string
-  elevenlabsId: string | null
-  replyParameters: ReplyParameterType<Methods<RawApi>>
-  needsReply: boolean
-  messageThreadId: number | undefined
-  isTopicMessage: boolean | undefined
-}
 
 export async function sendVoiceRecording({
   ctx,
