@@ -5,5 +5,5 @@
     "rootDir": "..",
     "outDir": "dist"
   },
-  "include": ["src/**/*", "../client/**/*", "../../orchestrator/src/**/*"]
+  "include": ["src/**/*", "../client/**/*"]
 }
