@@ -1,22 +1,21 @@
 import process from 'node:process'
 import { BotClient } from './bot'
-import { env } from './env'
+import { env } from '@sensay/orchestrator/src/env'
+import { Signal } from '@sensay/orchestrator/src/types/process'
 
-if (!env.BOT_TOKEN) { // TODO: MICHELE: unify with env from orchestrator (move to common?)
+if (!env.BOT_TOKEN) {
   throw new Error('BOT_TOKEN is not defined')
 }
 
-if (!env.REPLICA_UUID) { // TODO: MICHELE: unify with env from orchestrator (move to common?)
+if (!env.REPLICA_UUID) {
   throw new Error('REPLICA_UUID is not defined')
 }
 
-if (!env.OWNER_UUID) { // TODO: MICHELE: unify with env from orchestrator (move to common?)
+if (!env.OWNER_UUID) {
   throw new Error('OWNER_UUID is not defined')
 }
 
 const bot = new BotClient(env.BOT_TOKEN, env.REPLICA_UUID, env.OWNER_UUID)
-
-// TODO: MICHELE: Needs testing
 
 const stopBot = () => {
   bot
@@ -30,7 +29,7 @@ const stopBot = () => {
     })
 }
 
-process.on('SIGINT', stopBot) // TODO: MICHELE: magic strings, if reused
-process.on('SIGTERM', stopBot) // TODO: MICHELE: magic strings, if reused
+process.on(Signal.SIGINT, stopBot)
+process.on(Signal.SIGTERM, stopBot)
 
 bot.start()

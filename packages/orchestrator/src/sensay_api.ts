@@ -1,17 +1,7 @@
 import { z } from 'zod'
 import { ReplicaUUIDSchema } from './bot_definition'
 import { chaosTest } from './utils/chaos'
-import dotenv from 'dotenv'
-import assert from 'node:assert'
-
-const dotenvOutput = dotenv.config({ path: '.env.local' })
-
-if (dotenvOutput.error) {
-  throw dotenvOutput.error
-}
-
-assert(dotenvOutput.parsed)
-const env = dotenvOutput.parsed
+import { env } from './env'
 
 class SensayAPIError extends Error {
   readonly status: number
@@ -115,7 +105,8 @@ export class SensayAPIClient implements SensayAPI {
     url: URL,
     responseSchema: z.ZodObject<TSchema>,
   ): Promise<z.infer<typeof responseSchema> | null> {
-    const response = await fetch(url, { // TODO: MICHELE: switch to sdk
+    const response = await fetch(url, {
+      // TODO: MICHELE: switch to sdk
       headers: {
         'Content-Type': 'application/json',
         'User-Agent': 'Sensay-Bot-Orchestrator',
