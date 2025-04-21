@@ -1,5 +1,5 @@
 {
-  "name": "@sensay/orchestrator",
+  "name": "@sensay/telegram-orchestrator",
   "type": "module",
   "version": "0.1.0",
   "license": "Apache-2.0",
@@ -8,7 +8,7 @@
   "description": "A service to run Telegram bots in cluster mode",
   "main": "dist/index.js",
   "engines": {
-    "node": ">=22.13.11"
+    "node": "22.x"
   },
   "scripts": {
     "build": "node esbuild.config.mjs",
@@ -21,7 +21,8 @@
     "@hono/sentry": "^1.2.1",
     "@hono/swagger-ui": "^0.5.1",
     "@hono/zod-openapi": "^0.19.2",
-    "@sensay/bot": "*",
+    "@sensay/telegram-bot": "*",
+    "@sensay/telegram-shared": "*",
     "@sentry/node": "^9.12.0",
     "@sentry/tracing": "^7.120.3",
     "hono": "^4.7.5",

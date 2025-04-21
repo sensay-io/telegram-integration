@@ -1,4 +1,4 @@
-import type { BotClient } from '@sensay/bot'
+import type { BotClient } from '@sensay/telegram-bot'
 import type { BotDefinition } from './bot_definition'
 import { BotIPCChannel, type HealthCheckResponse } from './bot_ipc_channel'
 import { traceAll } from './logging/decorators'

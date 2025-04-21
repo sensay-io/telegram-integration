@@ -7,12 +7,12 @@
   "description": "Sensay Telegram integration",
   "keywords": ["bots", "telegram", "sensay"],
   "private": true,
-  "workspaces": ["packages/*"],
+  "workspaces": ["packages/shared", "packages/bot", "packages/orchestrator"],
   "engines": {
     "node": "22.x"
   },
   "scripts": {
-    "build": "npm run build:bot && npm run build:orc",
+    "build": "npm run build --workspaces --if-present",
     "build:bot": "npm run build -w packages/bot",
     "build:orc": "npm run build -w packages/orchestrator",
     "start": "npm run start -w packages/orchestrator",
@@ -27,11 +27,6 @@
   },
   "lint-staged": {
     "*.{js,ts,json}": "biome check --write src"
-  },
-  "dependencies": {
-    "@hey-api/client-fetch": "^0.10.0",
-    "@hey-api/openapi-ts": "^0.66.3",
-    "@hono/node-server": "^1.14.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",

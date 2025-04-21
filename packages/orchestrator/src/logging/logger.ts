@@ -1,5 +1,5 @@
 import type { Breadcrumb as SentryBreadcrumb } from '@sentry/core'
-import type * as Sentry from '@sentry/node'
+import * as Sentry from '@sentry/node'
 import pino, { type Logger as PinoLogger } from 'pino'
 import pretty from 'pino-pretty'
 
@@ -16,7 +16,7 @@ export type Breadcrumb = SentryBreadcrumb
 
 export type LoggerConfig = {
   level?: LoggerLevel
-  scope: Sentry.Scope
+  scope?: Sentry.Scope
 }
 
 export class Logger {
@@ -25,7 +25,10 @@ export class Logger {
     private readonly scope: Sentry.Scope,
   ) {}
 
-  static create({ level = LoggerLevel.INFO, scope }: LoggerConfig): Logger {
+  static create({
+    level = LoggerLevel.INFO,
+    scope = Sentry.getCurrentScope(),
+  }: LoggerConfig): Logger {
     const pinoLogger = pino(
       {
         level,

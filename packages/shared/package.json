@@ -1,0 +1,19 @@
+{
+  "name": "@sensay/telegram-shared",
+  "type": "module",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "author": "Sensay",
+  "keywords": ["bots", "telegram", "sensay"],
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "node esbuild.config.mjs",
+    "generate-api-client": "openapi-ts"
+  },
+  "devDependencies": {
+    "@hey-api/client-fetch": "^0.10.0",
+    "@hey-api/openapi-ts": "^0.66.5",
+    "esbuild": "^0.25.1",
+    "typescript": "^5.8.3"
+  }
+}

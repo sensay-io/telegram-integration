@@ -60,13 +60,7 @@ const shutdown = (reason: Signal) => {
   }, gracefulShutdownTimeout)
 }
 
-const api =
-  config.isTesting || config.isChaos
-    ? new FakeSensayAPIClient()
-    : new SensayAPIClient(config.SENSAY_API_URL, config.SENSAY_API_KEY.getSensitiveValue())
-
 const orchestrator = new Orchestrator({
-  api,
   logger,
   telegramServiceName: config.TELEGRAM_SERVICE_NAME,
   reloadBotsIntervalMs: config.RELOAD_BOTS_INTERVAL_MS,

@@ -1,12 +1,11 @@
+import { getV1Replicas } from '@sensay/telegram-shared'
 import type { BotDefinition, ReplicaUUID } from './bot_definition'
 import { BotStatus, type BotStatusInfo, BotSupervisor } from './bot_supervisor'
 import { SensitiveString } from './config/sensitive_string'
 import { traceAll } from './logging/decorators'
 import type { Logger } from './logging/logger'
-import { Integration, type SensayAPI } from './sensay_api'
 
 export type OrchestratorConfig = {
-  api: SensayAPI
   logger: Logger
   telegramServiceName: string
   reloadBotsIntervalMs: number
@@ -123,7 +122,7 @@ export class Orchestrator {
     if (
       newBotDefinition.replicaUUID === existingBotDefinition?.replicaUUID &&
       newBotDefinition.replicaSlug === existingBotDefinition?.replicaSlug &&
-      newBotDefinition.ownerUUID === existingBotDefinition?.ownerUUID &&
+      newBotDefinition.ownerID === existingBotDefinition?.ownerID &&
       newBotDefinition.token.getSensitiveValue() ===
         existingBotDefinition?.token.getSensitiveValue()
     ) {
@@ -192,19 +191,23 @@ export class Orchestrator {
   }
 
   private async loadBotsDefinitions(): Promise<Map<ReplicaUUID, BotDefinition>> {
-    const replicas = await this.config.api.getReplicas({
-      intergration: Integration.TELEGRAM,
+    const replicas = await getV1Replicas({
+      query: {
+        integration: 'telegram',
+      },
     })
 
-    const botsDefinitions: [ReplicaUUID, BotDefinition][] = replicas
-      .filter((replica) => replica.telegram_service_name === this.config.telegramServiceName)
+    const botsDefinitions: [ReplicaUUID, BotDefinition][] = replicas.data.items
+      .filter(
+        (replica) => replica.telegram_integration?.service_name === this.config.telegramServiceName,
+      )
       .map((replica) => {
         return [
           replica.uuid,
           {
             replicaUUID: replica.uuid,
             replicaSlug: replica.slug,
-            ownerUUID: replica.owner_uuid,
+            ownerID: replica.ownerID,
             token: new SensitiveString(replica.telegram_integration?.token ?? ''),
           } satisfies BotDefinition,
         ]

@@ -1,14 +1,13 @@
 import { env } from 'node:process'
+import { postV1ReplicasByReplicaUuidChatCompletionsTelegram } from '@sensay/telegram-shared'
 import { ElevenLabsClient } from 'elevenlabs'
 import { InputFile } from 'grammy'
 import removeMd from 'remove-markdown'
-import { postV1ReplicasByReplicaUuidChatCompletionsTelegram } from '../../client/sdk.gen'
 import { NonCriticalError } from './bot-actions'
 import { ctxReply } from './helpers'
 import { getReplyParameters } from './helpers'
 import { captureException } from './helpers'
 import type { SendErrorArgs, SendMessageArgs, SendVoiceRecordingArgs } from './types/responses'
-import { commonHeaders } from './constants'
 
 export async function sendMessage({
   parsedMessage,
@@ -23,7 +22,6 @@ export async function sendMessage({
   const completionResponse = await postV1ReplicasByReplicaUuidChatCompletionsTelegram({
     path: { replicaUUID: replicaUuid },
     headers: {
-      ...commonHeaders,
       'X-USER-ID': ctx.from?.id.toString() || '',
       'X-USER-ID-TYPE': 'telegram',
     },
