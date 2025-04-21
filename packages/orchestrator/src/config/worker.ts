@@ -9,7 +9,7 @@ const envSchema = z
     BOT_TOKEN: SensitiveStringSchema,
     REPLICA_UUID: z.string(),
     REPLICA_SLUG: z.string().optional(),
-    OWNER_UUID: z.string(),
+    OWNER_ID: z.string(),
     SENSAY_API_URL: z.string(),
     SENSAY_API_KEY: z.string(),
     VERCEL_PROTECTION_BYPASS_KEY: z.string(),

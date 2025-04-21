@@ -1,15 +1,15 @@
 import assert from 'node:assert'
 import type { AutoChatActionFlavor } from '@grammyjs/auto-chat-action'
 import type { FileFlavor } from '@grammyjs/files'
-import type { Api, Bot, Context, RawApi } from 'grammy'
 import {
   getV1UsersMe,
   postV1ReplicasByReplicaUuidChatHistoryTelegram,
   postV1Users,
-} from '../../client/sdk.gen'
+} from '@sensay/telegram-shared'
+import type { Api, Bot, Context, RawApi } from 'grammy'
 import { NonCriticalError, botActions } from './bot-actions'
 import { initTelegramBot } from './bot-actions'
-import { PRIVATE_CHAT, commonHeaders } from './constants'
+import { PRIVATE_CHAT } from './constants'
 import { hasUserRepliedToReplica } from './helpers'
 import { parse } from './helpers'
 import { sendError } from './responses'
@@ -20,12 +20,12 @@ type MyBot = Bot<MyContext, Api<RawApi>>
 export class BotClient {
   private readonly bot: MyBot
   private readonly replicaUuid: string
-  private readonly ownerUuid: string
+  private readonly ownerID: string
   private readonly isStarted = Promise.withResolvers<boolean>()
 
-  constructor(botToken: string, replicaUuid: string, ownerUuid: string) {
+  constructor(botToken: string, replicaUuid: string, ownerID: string) {
     this.replicaUuid = replicaUuid
-    this.ownerUuid = ownerUuid
+    this.ownerID = ownerID
     this.bot = initTelegramBot(botToken)
   }
 
@@ -67,7 +67,6 @@ export class BotClient {
         await postV1ReplicasByReplicaUuidChatHistoryTelegram({
           path: { replicaUUID: this.replicaUuid },
           headers: {
-            ...commonHeaders,
             'X-USER-ID': userId,
             'X-USER-ID-TYPE': 'telegram',
           },
@@ -94,7 +93,7 @@ export class BotClient {
       botUsername: this.bot.botInfo.username,
       replicaUuid: this.replicaUuid,
       overridePlan: false,
-      ownerUuid: this.ownerUuid,
+      ownerID: this.ownerID,
       elevenlabsId: null,
     })
 
@@ -130,7 +129,6 @@ async function createUserIfNotExist(userId: string) {
   // First, try to get the user using the users/me endpoint
   const getUserResponse = await getV1UsersMe({
     headers: {
-      ...commonHeaders,
       'X-USER-ID': userId,
       'X-USER-ID-TYPE': 'telegram',
     },
@@ -154,7 +152,6 @@ async function createUserIfNotExist(userId: string) {
 
 async function createUser(userId: string) {
   const createUserResponse = await postV1Users({
-    headers: commonHeaders,
     body: {
       id: userId,
       linkedAccounts: [

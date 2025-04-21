@@ -4,17 +4,17 @@ import { limit } from '@grammyjs/ratelimiter'
 import { apiThrottler } from '@grammyjs/transformer-throttler'
 import { Bot, type Context } from 'grammy'
 import type { Api, RawApi } from 'grammy'
+import { PRIVATE_CHAT } from './constants'
 import {
   getReplyParameters,
   hasUserRepliedToReplica,
   isPlanValid,
   parse,
   removeMentionIfNeeded,
-  voiceRequest
+  voiceRequest,
 } from './helpers.js'
 import { sendError, sendMessage } from './responses.js'
 import { sendVoiceRecording } from './responses.js'
-import { PRIVATE_CHAT } from './constants'
 
 export class NonCriticalError extends Error {
   constructor(message: string) {
@@ -53,7 +53,7 @@ export type HandleTelegramBotArgs = {
   botUsername: string
   replicaUuid: string
   overridePlan: boolean
-  ownerUuid: string
+  ownerID: string
   elevenlabsId: string | null
 }
 
@@ -62,7 +62,7 @@ export const botActions = ({
   botUsername,
   replicaUuid,
   overridePlan,
-  ownerUuid,
+  ownerID,
   elevenlabsId,
 }: HandleTelegramBotArgs) => {
   bot.on('message::mention', async (ctx, next) => {
@@ -162,7 +162,7 @@ export const botActions = ({
 
       ctx.chatAction = 'typing'
 
-      isPlanValid(overridePlan, ownerUuid)
+      isPlanValid(overridePlan, ownerID)
 
       const { voice } = await voiceRequest(messageText)
 

@@ -4,7 +4,7 @@ export default defineConfig({
   input: 'https://api.sensay.io/schema',
   output: {
     format: 'biome',
-    path: './app/client',
+    path: './src/api-client',
     clean: false,
     indexFile: false,
   },
@@ -27,7 +27,8 @@ export default defineConfig({
     },
     {
       name: '@hey-api/client-fetch',
-      runtimeConfigPath: './app/client/runtime-config.ts',
+      runtimeConfigPath: './src/api-client/runtime-config.ts',
+      throwOnError: true,
     },
   ],
 })

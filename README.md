@@ -8,7 +8,7 @@ This project provides a complete solution for running and managing multiple Tele
 
 1. **Bot** (`@sensay/telegram-bot`): The core Telegram bot implementation based on the Grammy library, responsible for handling bot interactions.
 
-2. **Orchestrator** (`@sensay/orchestrator`): A service that manages multiple bot instances, ensuring they're running correctly, handling health checks, and providing a management API.
+2. **Orchestrator** (`@sensay/telegram-orchestrator`): A service that manages multiple bot instances, ensuring they're running correctly, handling health checks, and providing a management API.
 
 ## Features
 
@@ -87,13 +87,17 @@ npm run check:write
 
 ## Packages
 
+### Shared (`@sensay/telegram-shared`)
+
+The shared package contains shared utilities and types used across the project. It includes the Telegram API client, logging utilities, and common types.
+
 ### Bot (`@sensay/telegram-bot`)
 
 The bot package provides the core functionality for Telegram bot interactions. It handles messages, commands, and other Telegram events.
 
 For detailed information, see the [Bot README](packages/bot/README.md).
 
-### Orchestrator (`@sensay/orchestrator`)
+### Orchestrator (`@sensay/telegram-orchestrator`)
 
 The orchestrator manages multiple bot instances, ensuring they're running correctly, and provides a management API for adding, updating, and removing bots.
 

@@ -24,7 +24,7 @@ export enum BotStatus {
 export type BotStatusInfo = {
   replicaUUID: string
   replicaSlug?: string
-  ownerUUID: string
+  ownerID: string
   status: BotStatus
   pid?: number
 }
@@ -79,7 +79,7 @@ export class BotSupervisor {
     return {
       replicaUUID: this.botDefinition.replicaUUID,
       replicaSlug: this.botDefinition.replicaSlug,
-      ownerUUID: this.botDefinition.ownerUUID,
+      ownerID: this.botDefinition.ownerID,
       status: this.status,
       pid: this.botHost?.PID,
     }
@@ -119,7 +119,10 @@ export class BotSupervisor {
     this.failedStartAttempts++
 
     if (this.failedStartAttempts < this.config.maxFailedStartAttempts) {
-      this.logger.addBreadcrumb({ message: 'Bot is unhealthy, scheduling restart', data: { attempts: this.failedStartAttempts } })
+      this.logger.addBreadcrumb({
+        message: 'Bot is unhealthy, scheduling restart',
+        data: { attempts: this.failedStartAttempts },
+      })
       this.scheduleRestart()
       return
     }

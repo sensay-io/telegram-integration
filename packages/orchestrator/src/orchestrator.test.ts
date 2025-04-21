@@ -3,7 +3,6 @@ import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { Logger, LoggerLevel } from './logging/logger'
 import { Orchestrator } from './orchestrator'
-import { FakeSensayAPIClient } from './sensay_api'
 
 cluster.setupPrimary({
   exec: path.resolve(import.meta.dirname, 'start_worker.ts'),
@@ -39,7 +38,6 @@ const FAKE_REPLICAS = [
 describe('Orchestrator', () => {
   it('should start a worker for each replica', async () => {
     const orchestrator = new Orchestrator({
-      api: new FakeSensayAPIClient({ replicas: FAKE_REPLICAS }),
       logger: Logger.create({ level: LoggerLevel.INFO }),
       telegramServiceName: 'sensay-telegram-integrations',
       reloadBotsIntervalMs: 1000,
