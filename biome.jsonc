@@ -6,15 +6,7 @@
     "useIgnoreFile": true
   },
   "files": {
-    "ignore": [
-      "./api/index.js",
-      "./tdlib-types.d.ts",
-      "./vercel.json",
-      "./db/supabase.types.ts",
-      "./src/env.ts",
-      "./renovate.json",
-      "./.vercel/**/*"
-    ]
+    "ignore": ["packages/shared/src/api-client/**", "**/node_modules/**", "**/dist/**"]
   },
   "formatter": {
     "enabled": true,

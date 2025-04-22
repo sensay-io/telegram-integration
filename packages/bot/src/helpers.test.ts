@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
-  removeMentionIfNeeded,
-  hasUserRepliedToReplica,
   escapeMarkdown,
+  hasUserRepliedToReplica,
+  removeMentionIfNeeded,
   voiceRequest,
 } from './helpers'
 

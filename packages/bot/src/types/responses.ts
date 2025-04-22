@@ -3,7 +3,7 @@ import type { FileFlavor } from '@grammyjs/files'
 import type { LanguageModelUsage } from 'ai'
 import type { Context } from 'grammy'
 import type { Methods, RawApi } from 'grammy/out/core/client'
-import type { ReplyParameterType, ParsedTelegramChat } from '../helpers'
+import type { ParsedTelegramChat, ReplyParameterType } from '../helpers'
 
 export type SendMessageArgs = {
   parsedMessage: ParsedTelegramChat

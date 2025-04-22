@@ -15,7 +15,7 @@ const envSchema = z
     TELEGRAM_SERVICE_NAME: z.string().default('sensay-telegram-integrations'),
     RELOAD_BOTS_INTERVAL_MS: z.coerce.number().default(5 * 60 * 1000),
     PRINT_BOTS_STATUS_INTERVAL_MS: z.coerce.number().default(60 * 1000),
-    HEALTH_CHECK_TIMEOUT_MS: z.coerce.number().default(1000),
+    HEALTH_CHECK_TIMEOUT_MS: z.coerce.number().default(4000),
     HEALTH_CHECK_INTERVAL_MS: z.coerce.number().default(5000),
     GRACEFUL_SHUTDOWN_TIMEOUT_MS: z.coerce.number().default(1000),
     MAX_FAILED_START_ATTEMPTS: z.coerce.number().default(3),
@@ -29,7 +29,7 @@ async function createConfig() {
 
   const parsed = envSchema.safeParse(process.env)
   if (parsed.success) {
-    logger.debug('\nEnvironment validation passed:')
+    logger.debug('[Orchestrator] Environment validation passed:')
     logger.table(Object.entries(parsed.data))
   } else {
     await logger.fatal(parsed.error, 'Environment validation failed:')

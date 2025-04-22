@@ -274,20 +274,18 @@ export class Orchestrator {
   private async loadBotsDefinitions(): Promise<Map<ReplicaUUID, BotDefinition>> {
     const botsDefinitions = new Map<ReplicaUUID, BotDefinition>()
 
-    for await (const replicas of this.loadAllReplicas()) {
-      for (const replica of replicas) {
-        if (replica.telegram_integration?.service_name !== this.config.telegramServiceName) {
-          continue
-        }
-
-        const botDefinition = {
-          replicaUUID: replica.uuid,
-          replicaSlug: replica.slug,
-          ownerID: replica.ownerID,
-          token: new SensitiveString(replica.telegram_integration.token ?? ''),
-        } satisfies BotDefinition
-        botsDefinitions.set(botDefinition.replicaUUID, botDefinition)
+    for await (const replica of this.loadAllReplicas()) {
+      if (replica.telegram_integration?.service_name !== this.config.telegramServiceName) {
+        continue
       }
+
+      const botDefinition = {
+        replicaUUID: replica.uuid,
+        replicaSlug: replica.slug,
+        ownerID: replica.ownerID,
+        token: new SensitiveString(replica.telegram_integration.token ?? ''),
+      } satisfies BotDefinition
+      botsDefinitions.set(botDefinition.replicaUUID, botDefinition)
     }
 
     return botsDefinitions
@@ -313,7 +311,7 @@ export class Orchestrator {
     return botDefinition
   }
 
-  private async *loadAllReplicas(): AsyncIterable<Replica[]> {
+  private async *loadAllReplicas(): AsyncIterable<Replica> {
     let totalPages = 0
     let pageIndex = 1 // page_index in the API starts with 1
     const pageSize = 100
@@ -322,7 +320,7 @@ export class Orchestrator {
       totalPages = Math.ceil(total / pageSize)
       this.logger.trace(`Processing replicas page ${pageIndex} of ${totalPages}`)
       pageIndex++
-      yield items
+      yield* items
     } while (pageIndex <= totalPages)
   }
 
