@@ -23,7 +23,7 @@ function createConfig() {
   if (!parsed.success) {
     console.error('Environment validation failed:')
     console.table(parsed.error.issues)
-    process.exit(-1)
+    process.exit(1)
   }
 
   const { NODE_ENV, ...data } = parsed.data

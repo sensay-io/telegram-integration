@@ -13,6 +13,8 @@ import { z } from 'zod'
 import { NonCriticalError } from './bot-actions'
 import { config } from './config'
 
+// TODO: API-589 Refactor this file. Move functions to domain-specific files.
+
 export function removeMentionIfNeeded(text: string, mention: string, reply?: boolean) {
   const mentionWithSymbol = `@${mention}`
 
