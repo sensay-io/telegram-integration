@@ -32,10 +32,9 @@ async function createConfig() {
     logger.debug('\nEnvironment validation passed:')
     logger.table(Object.entries(parsed.data))
   } else {
-    logger.error('Environment validation failed:')
+    await logger.fatal(parsed.error, 'Environment validation failed:')
     logger.table(parsed.error.issues)
-    await Sentry.flush()
-    process.exit(-1)
+    process.exit(1)
   }
 
   const { NODE_ENV, ...data } = parsed.data

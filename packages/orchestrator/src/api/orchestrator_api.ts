@@ -14,7 +14,7 @@ import { botsPOST } from './bots/bots_post'
 import { botsPUT } from './bots/bots_put'
 
 const API_TITLE = 'Sensay Telegram Bot Orchestrator'
-const API_VERSION = '2025-04-01' // TODO: MICHELE: discuss
+const API_VERSION = '2025-04-01'
 
 export type OrchestratorAPIConfig = {
   authToken: string
