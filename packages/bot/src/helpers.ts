@@ -1,17 +1,17 @@
-import { env } from 'node:process'
 import type { AutoChatActionFlavor } from '@grammyjs/auto-chat-action'
 import type { FileFlavor } from '@grammyjs/files'
+import type { Message, Update } from '@grammyjs/types'
 import type { Context, RawApi } from 'grammy'
 import type { Other as OtherApi } from 'grammy/out/core/api.js'
-import type { Message, Update } from '@grammyjs/types'
+import type { Methods } from 'grammy/out/core/client.js'
 
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateObject } from 'ai'
 import { codeBlock } from 'common-tags'
-import type { Methods } from 'grammy/out/core/client.js'
+import removeMd from 'remove-markdown'
 import { z } from 'zod'
 import { NonCriticalError } from './bot-actions'
-import removeMd from 'remove-markdown'
+import { config } from './config'
 
 export function removeMentionIfNeeded(text: string, mention: string, reply?: boolean) {
   const mentionWithSymbol = `@${mention}`
@@ -112,7 +112,7 @@ Examples:
     voice: z.boolean(),
   })
 
-  const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY })
+  const openai = createOpenAI({ apiKey: config.OPENAI_API_KEY.getSensitiveValue() })
 
   const { object }: { object: { voice: boolean } } = await generateObject({
     model: openai('gpt-4o-mini'),
@@ -191,8 +191,8 @@ export type ParsedTelegramChat = {
   }
 }
 
-export const captureException = (error: Error, extra?: unknown) => {
-  console.error(error, extra)
+export const captureException = (error: Error, extra?: Record<string, unknown>) => {
+  return config.logger.error(error)
 }
 
 export function escapeMarkdown(text: string): string {

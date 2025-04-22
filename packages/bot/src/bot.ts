@@ -97,6 +97,10 @@ export class BotClient {
       elevenlabsId: null,
     })
 
+    // This will only catch errors in the middlewares.
+    // It will not catch errors that are thrown in the internal polling loop methods like fetchUpdates:
+    // https://github.com/grammyjs/grammY/blob/0348b93762ab2c7341b63b642f9923a0d31ed7d5/src/bot.ts#L584
+    // https://github.com/grammyjs/grammY/issues/503
     this.bot.catch(async (error) => {
       await sendError({
         message:

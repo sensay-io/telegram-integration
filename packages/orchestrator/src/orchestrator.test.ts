@@ -1,7 +1,7 @@
 import cluster from 'node:cluster'
 import path from 'node:path'
+import { Logger, LoggerLevel } from '@sensay/telegram-shared'
 import { describe, expect, it } from 'vitest'
-import { Logger, LoggerLevel } from './logging/logger'
 import { Orchestrator } from './orchestrator'
 
 cluster.setupPrimary({

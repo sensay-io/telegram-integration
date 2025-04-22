@@ -1,9 +1,9 @@
-import { env } from 'node:process'
 import { postV1ReplicasByReplicaUuidChatCompletionsTelegram } from '@sensay/telegram-shared'
 import { ElevenLabsClient } from 'elevenlabs'
 import { InputFile } from 'grammy'
 import removeMd from 'remove-markdown'
 import { NonCriticalError } from './bot-actions'
+import { config } from './config'
 import { ctxReply } from './helpers'
 import { getReplyParameters } from './helpers'
 import { captureException } from './helpers'
@@ -112,7 +112,7 @@ export const sendError = async ({
 
 // ignore for now
 const elevenLabs = new ElevenLabsClient({
-  apiKey: env.ELEVENLABS_API_KEY,
+  apiKey: config.ELEVENLABS_API_KEY.getSensitiveValue(),
 })
 
 export async function sendVoiceRecording({

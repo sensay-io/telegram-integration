@@ -1,7 +1,7 @@
 import { createRouter } from '@/api/router'
 import { BotCRUDOperationResult, type Orchestrator } from '@/orchestrator'
-import { assertNever } from '@/types/common'
 import { type OpenAPIHono, type RouteHandler, createRoute } from '@hono/zod-openapi'
+import { assertNever } from '@sensay/telegram-shared'
 import {
   HTTPStatusCodes,
   ReplicaUUIDParameter,

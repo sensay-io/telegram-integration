@@ -1,17 +1,16 @@
 import cluster from 'node:cluster'
 import path from 'node:path'
+import { Event, Signal, process } from '@sensay/telegram-shared'
 import { OrchestratorAPI } from './api/orchestrator_api'
-import { config } from './config/cluster'
+import { config } from './config'
 import { Orchestrator } from './orchestrator'
-import { FakeSensayAPIClient, SensayAPIClient } from './sensay_api'
-import { Event, Signal, process } from './types/process'
 
 const logger = config.logger.child({
   module: path.basename(import.meta.filename),
 })
 
 if (!cluster.isPrimary) {
-  logger.fatal('This file must be run in a primary process')
+  await logger.fatal('This file must be run in a primary process')
   process.exit(1)
 }
 
@@ -24,12 +23,12 @@ process.on(Signal.SIGTERM, () => shutdown(Signal.SIGTERM))
 // Let it crash. The orchestrator process itself can be restarted by an external system like PM2 or systemd.
 // When there are a lot of bots running, it might be better to let orchestrator keep running,
 // and reconcile the state. It's not clear yet which approach is better. We need to test it based on real data.
-process.on(Event.UNCAUGHT_EXCEPTION, (err) => {
-  logger.error(err, Event.UNCAUGHT_EXCEPTION)
+process.on(Event.UNCAUGHT_EXCEPTION, async (err) => {
+  await logger.fatal(err, Event.UNCAUGHT_EXCEPTION)
   process.exit(1)
 })
-process.on(Event.UNHANDLED_REJECTION, (err) => {
-  logger.error(err, Event.UNHANDLED_REJECTION)
+process.on(Event.UNHANDLED_REJECTION, async (err) => {
+  await logger.fatal(err, Event.UNHANDLED_REJECTION)
   process.exit(1)
 })
 
@@ -51,7 +50,7 @@ const shutdown = (reason: Signal) => {
       process.exit(1)
     })
 
-  // bots are shutting down in parallel, but the total shutdown timeout might exceed
+  // bots are shutting down in parallel, but the total shutdown time might exceed the timeout for one bot
   const gracefulShutdownTimeout = config.GRACEFUL_SHUTDOWN_TIMEOUT_MS * 2
 
   setTimeout(() => {
@@ -81,6 +80,6 @@ const orchestratorAPI = new OrchestratorAPI(orchestrator, {
 
 orchestratorAPI.start()
 
-// The lack of any exports makes Sentry bundler plugin unhappy
+// The lack of default export makes Sentry bundler plugin unhappy
 // https://github.com/getsentry/sentry-javascript-bundler-plugins/issues/471
 export default {}

@@ -28,6 +28,8 @@
     "@grammyjs/types": "^3.19.0",
     "@hey-api/client-fetch": "^0.10.0",
     "@sensay/telegram-shared": "*",
+    "@sentry/node": "^9.13.0",
+    "@sentry/tracing": "^7.120.3",
     "@types/common-tags": "^1.8.4",
     "ai": "^4.2.10",
     "common-tags": "^1.8.2",
@@ -37,12 +39,13 @@
     "remove-markdown": "^0.6.0"
   },
   "devDependencies": {
+    "@sentry/types": "^9.13.0",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^20.17.25",
     "esbuild": "^0.25.1",
     "nodemon": "^3.0.1",
     "tsx": "^4.19.3",
-    "typescript": "^5.3.2",
+    "typescript": "^5.8.3",
     "vitest": "^3.1.1"
   }
 }

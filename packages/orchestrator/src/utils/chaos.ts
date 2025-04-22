@@ -1,7 +1,6 @@
 import { inspect } from 'node:util'
-import { config } from '../config/common'
-import { Environment } from '../config/environment'
-import type { Logger } from '../logging/logger'
+import { config } from '@/config'
+import { Environment, type Logger } from '@sensay/telegram-shared'
 import { type Method, decorateAll } from './decorators'
 
 type ChaosConfig = {

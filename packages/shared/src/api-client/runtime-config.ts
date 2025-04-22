@@ -1,30 +1,31 @@
-import assert from 'node:assert'
-import { env } from 'node:process'
+import { config } from '@/config'
 import type { Client } from '@hey-api/client-fetch'
 import type { CreateClientConfig } from './client.gen'
 
-// TODO: Use common config when it's migrated from the orchestrator package
-const SENSAY_API_URL = env.SENSAY_API_URL
-const SENSAY_API_KEY = env.SENSAY_API_KEY
-const VERCEL_PROTECTION_BYPASS = env.VERCEL_PROTECTION_BYPASS
-assert(SENSAY_API_URL, 'SENSAY_API_URL is not defined')
-assert(SENSAY_API_KEY, 'SENSAY_API_KEY is not defined')
+const SENSAY_API_URL = config.SENSAY_API_URL
+const SENSAY_API_KEY = config.SENSAY_API_KEY.getSensitiveValue()
+const VERCEL_PROTECTION_BYPASS_KEY = config.VERCEL_PROTECTION_BYPASS_KEY.getSensitiveValue()
 
 const SENSAY_API_VERSION = '2025-04-01'
 
 export default class SensayApiError extends Error {
-  statusCode: number
-
-  constructor(message: string, statusCode: number) {
+  constructor(
+    readonly message: string,
+    readonly statusCode: number,
+    readonly responseBody?: string,
+  ) {
     super(message)
-    this.statusCode = statusCode
   }
-}
 
-export type SensayApiErrorResponseBody = {
-  success: 'false'
-  type: 'object'
-  message: string
+  static async fromResponse(response: Response): Promise<SensayApiError> {
+    const res = response.clone()
+    try {
+      const body = await res.text()
+      return new SensayApiError(res.statusText, res.status, body)
+    } catch (e) {
+      return new SensayApiError(res.statusText, res.status)
+    }
+  }
 }
 
 /**
@@ -48,8 +49,8 @@ export const configureInterceptors = (client: Client) => {
     request.headers.set('X-ORGANIZATION-SECRET', SENSAY_API_KEY)
 
     // Bypass Vercel protection for staging
-    if (VERCEL_PROTECTION_BYPASS) {
-      request.headers.set('X-VERCEL-PROTECTION-BYPASS', VERCEL_PROTECTION_BYPASS)
+    if (VERCEL_PROTECTION_BYPASS_KEY) {
+      request.headers.set('X-VERCEL-PROTECTION-BYPASS', VERCEL_PROTECTION_BYPASS_KEY)
     }
 
     return request
@@ -57,17 +58,10 @@ export const configureInterceptors = (client: Client) => {
 
   client.interceptors.response.use(async (response, _, options) => {
     if (!response.ok) {
-      // TODO: Add Sentry integration
+      const error = await SensayApiError.fromResponse(response)
+      config.logger.error(error)
       if (options.throwOnError) {
-        let responseBody: SensayApiErrorResponseBody | null = null
-        try {
-          responseBody = (await response.json()) as SensayApiErrorResponseBody
-        } catch {}
-
-        if (responseBody) {
-          throw new SensayApiError(responseBody.message, response.status)
-        }
-        throw new Error(`Sensay API communication error ${response.status}: ${response.statusText}`)
+        throw error
       }
       return response
     }

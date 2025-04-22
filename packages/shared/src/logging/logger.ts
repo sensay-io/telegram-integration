@@ -64,19 +64,23 @@ export class Logger {
     this.pinoLogger.info(obj, msg, ...args)
   }
 
-  warn(obj: object | string, msg?: string, ...args: unknown[]): void {
-    this.scope.captureMessage(`${obj}`, 'warning')
+  warn(obj: object | string, msg?: string, ...args: unknown[]): string {
     this.pinoLogger.warn(obj, msg, ...args)
+    return this.scope.captureMessage(`${obj}`, 'warning', { data: { args } })
   }
 
-  error(error: Error | string, msg?: string, ...args: unknown[]): void {
-    this.scope.captureException(error)
+  error(error: Error | string, msg?: string, ...args: unknown[]): string {
     this.pinoLogger.error(error, msg, ...args)
+    return this.scope.captureException(error, { data: { args } })
   }
 
-  fatal(error: Error | string, msg?: string, ...args: unknown[]): void {
-    this.scope.captureException(error)
+  async fatal(error: Error | string, msg?: string, ...args: unknown[]): Promise<string> {
     this.pinoLogger.fatal(error, msg, ...args)
+    const eventId = this.scope.captureException(error, { data: { args } })
+    // The fatal method is commonly called before exiting the process.
+    // Sentry events need to be flushed first, otherwise they will be lost.
+    await Sentry.flush()
+    return eventId
   }
 
   child(bindings: Record<string, unknown> & { module: string }): Logger {

@@ -1,6 +1,6 @@
-import { config } from '@/config/cluster'
+import { config } from '@/config'
+import { SensitiveStringSchema } from '@sensay/telegram-shared'
 import { z } from 'zod'
-import { SensitiveStringSchema } from './config/sensitive_string'
 
 export type ReplicaUUID = string
 export type BotToken = string
