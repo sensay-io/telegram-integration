@@ -9,6 +9,13 @@ const logger = config.logger.child({
   module: path.basename(import.meta.filename),
 })
 
+if (config.isTesting) {
+  const { setupMocks } = await import('./mocks/sensay-api')
+  const { server, getUser, getReplicas } = setupMocks()
+  server.use(getUser, getReplicas(100))
+  server.listen()
+}
+
 if (!cluster.isPrimary) {
   await logger.fatal('This file must be run in a primary process')
   process.exit(1)

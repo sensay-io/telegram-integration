@@ -1,5 +1,5 @@
 import { inspect } from 'node:util'
-import { config } from '@/config'
+import { config } from '@sensay/telegram-shared'
 import { Environment, type Logger } from '@sensay/telegram-shared'
 import { type Method, decorateAll } from './decorators'
 

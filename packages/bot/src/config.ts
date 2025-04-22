@@ -1,6 +1,5 @@
 import { env } from 'node:process'
 import {
-  Environment,
   SensitiveStringSchema,
   config as commonConfig,
   envSchema as commonEnvSchema,
@@ -30,13 +29,11 @@ async function createConfig() {
   const logger = commonConfig.logger
 
   if (parsed.success) {
-    if (parsed.data.NODE_ENV !== Environment.TEST) {
-      logger.trace('Environment validation passed:')
-      logger.table(
-        // Don't print SENTRY_BAGGAGE_HEADER. It messes up the output and is rarely useful.
-        Object.entries(parsed.data).filter(([key]) => !key.startsWith('SENTRY_BAGGAGE_HEADER')),
-      )
-    }
+    logger.trace('[Bot] Environment validation passed:')
+    logger.table(
+      // Don't print SENTRY_BAGGAGE_HEADER. It messes up the output and is rarely useful.
+      Object.entries(parsed.data).filter(([key]) => !key.startsWith('SENTRY_BAGGAGE_HEADER')),
+    )
   } else {
     await logger.fatal(parsed.error, 'Environment validation failed:')
     logger.table(parsed.error.issues)

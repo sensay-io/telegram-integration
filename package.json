@@ -19,7 +19,7 @@
     "dev:bot": "npm run dev -w packages/bot",
     "dev:orc": "npm run build && npm run dev -w packages/orchestrator",
     "dev:bun": "bun --filter orchestrator dev",
-    "test": "npm run test -ws --if-present",
+    "test": "npm run test --workspaces --if-present",
     "lint": "biome lint --diagnostic-level=warn",
     "lint:write": "biome lint --diagnostic-level=warn --write",
     "check": "biome check --diagnostic-level=warn",
@@ -34,6 +34,7 @@
     "@types/node": "^22.13.11",
     "lint-staged": "^15.5.0",
     "tsx": "^4.19.3",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.2",
+    "vite-tsconfig-paths": "^5.1.4"
   }
 }

@@ -1,4 +1,4 @@
-import { config } from '@/config'
+import { config } from '@sensay/telegram-shared'
 import { SensitiveStringSchema } from '@sensay/telegram-shared'
 import { z } from 'zod'
 

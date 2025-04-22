@@ -1,15 +1,19 @@
+import fs from 'node:fs'
 import process from 'node:process'
 import { sentryEsbuildPlugin } from '@sentry/esbuild-plugin'
 import * as esbuild from 'esbuild'
 
-await esbuild.build({
+const result = await esbuild.build({
   entryPoints: ['src/index.ts', 'src/start-worker.ts'],
   outdir: 'dist',
-  packages: 'bundle',
+  packages: 'external',
   target: 'node22',
   platform: 'node',
   format: 'esm',
   bundle: true,
+  minify: true,
+  treeShaking: true,
+  metafile: true,
   keepNames: true,
   sourcemap: true,
   logOverride: {
@@ -35,3 +39,5 @@ await esbuild.build({
     }),
   ],
 })
+
+fs.writeFileSync('dist/meta.json', JSON.stringify(result.metafile))

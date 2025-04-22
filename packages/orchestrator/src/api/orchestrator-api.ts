@@ -58,16 +58,8 @@ export class OrchestratorAPI {
       return
     }
 
-    return new Promise<void>((resolve, reject) => {
-      this.httpServer.close((err) => {
-        if (err) {
-          this.logger.error(err, 'HTTP server closed with error')
-          reject(err)
-          return
-        }
-
-        resolve()
-      })
+    return new Promise<void>((resolve) => {
+      this.httpServer.close(() => resolve())
     })
   }
 

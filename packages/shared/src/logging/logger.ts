@@ -1,3 +1,4 @@
+import process from 'node:process'
 import type { Breadcrumb as SentryBreadcrumb } from '@sentry/core'
 import * as Sentry from '@sentry/node'
 import pino, { type Logger as PinoLogger } from 'pino'
@@ -56,8 +57,8 @@ export class Logger {
     this.pinoLogger.debug(obj, msg, ...args)
   }
 
-  table(data: unknown[] | Record<string, unknown>) {
-    console.table(data)
+  table(data: unknown[] | Record<string, unknown>, columns?: string[]): void {
+    console.table(data, columns)
   }
 
   info(obj: object | string, msg?: string, ...args: unknown[]): void {
@@ -103,5 +104,15 @@ export class Logger {
   addBreadcrumb(breadcrumb: Breadcrumb) {
     this.scope.addBreadcrumb(breadcrumb)
     this.trace(breadcrumb, breadcrumb.message)
+  }
+
+  printMemoryUsage() {
+    const memoryUsage = Object.entries(process.memoryUsage()).map(([key, value]) => {
+      return {
+        'Memory usage': key,
+        MB: `${(value / 1000000).toFixed(2)} MB`,
+      }
+    })
+    this.table(memoryUsage, ['Memory usage', 'MB'])
   }
 }

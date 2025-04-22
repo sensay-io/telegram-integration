@@ -1,6 +1,6 @@
 import { inspect } from 'node:util'
-import { config } from '@/config'
 import type { Method } from '@/utils/decorators'
+import { config } from '@sensay/telegram-shared'
 import { Environment, type Logger } from '@sensay/telegram-shared'
 
 type TraceAllConfig = {

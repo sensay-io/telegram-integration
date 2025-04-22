@@ -1,7 +1,8 @@
 import cluster from 'node:cluster'
 import path from 'node:path'
+import process from 'node:process'
 import { BotClient, config } from '@sensay/telegram-bot'
-import { Event, Signal, process } from '@sensay/telegram-shared'
+import { Event, Signal } from '@sensay/telegram-shared'
 import type { BotDefinition } from './bot-definition'
 import { BotWorker } from './bot-worker'
 
@@ -12,6 +13,12 @@ import { BotWorker } from './bot-worker'
  * Having a separate file for the worker process makes it easier
  * to use different environment variables for the bot process.
  */
+
+if (config.isTesting) {
+  const { setupMocks } = await import('./mocks/telegram')
+  const { server } = setupMocks()
+  server.listen()
+}
 
 const logger = config.logger.child({
   module: path.basename(import.meta.filename),
@@ -62,7 +69,7 @@ process.on(Event.UNCAUGHT_EXCEPTION, async (error) => {
   process.exit(1)
 })
 process.on(Event.UNHANDLED_REJECTION, async (error) => {
-  await logger.fatal(error, Event.UNHANDLED_REJECTION)
+  await logger.fatal(error as Error, Event.UNHANDLED_REJECTION)
   process.exit(1)
 })
 
