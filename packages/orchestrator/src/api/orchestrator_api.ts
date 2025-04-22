@@ -1,10 +1,11 @@
 import { createServer } from 'node:http'
-import type { Logger } from '@/logging/logger'
+import process from 'node:process'
 import type { Orchestrator } from '@/orchestrator'
 import { type ServerType, createAdaptorServer } from '@hono/node-server'
 import { sentry } from '@hono/sentry'
 import { swaggerUI } from '@hono/swagger-ui'
 import { OpenAPIHono } from '@hono/zod-openapi'
+import type { Logger } from '@sensay/telegram-shared'
 import { bearerAuth } from 'hono/bearer-auth'
 import { HTTPException } from 'hono/http-exception'
 import { prettyJSON } from 'hono/pretty-json'
@@ -13,7 +14,7 @@ import { botsPOST } from './bots/bots_post'
 import { botsPUT } from './bots/bots_put'
 
 const API_TITLE = 'Sensay Telegram Bot Orchestrator'
-const API_VERSION = '2025-04-01'  // TODO: MICHELE: discuss
+const API_VERSION = '2025-04-01' // TODO: MICHELE: discuss
 
 export type OrchestratorAPIConfig = {
   authToken: string

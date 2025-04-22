@@ -12,6 +12,12 @@ await esbuild.build({
   bundle: true,
   keepNames: true,
   sourcemap: true,
+  logOverride: {
+    // webidl-conversions package generates some warnings that we can ignore
+    'equals-negative-zero': 'info',
+    // @grammyjs/transformer-throttler package generates some warnings that we can ignore
+    'direct-eval': 'info',
+  },
   banner: {
     // https://github.com/evanw/esbuild/pull/2067#issuecomment-1152399288
     js: "import { createRequire } from 'module'; const require = createRequire(import.meta.url);",

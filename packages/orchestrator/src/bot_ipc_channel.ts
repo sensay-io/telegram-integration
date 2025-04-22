@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
+import type { Logger, TypedWorker } from '@sensay/telegram-shared'
+import { WorkerEvent } from '@sensay/telegram-shared'
 import type { BotDefinition } from './bot_definition'
-import type { Logger } from './logging/logger'
-import { type TypedWorker, WorkerEvent } from './types/worker'
 import { chaosTest } from './utils/chaos'
 import { withTimeout } from './utils/timer'
 

@@ -1,20 +1,12 @@
-import process from 'node:process'
-import { Signal } from '@sensay/telegram-orchestrator/src/types/process'
+import { Signal, process } from '@sensay/telegram-shared'
 import { BotClient } from './bot'
+import { config } from './config'
 
-if (!process.env.BOT_TOKEN) {
-  throw new Error('BOT_TOKEN is not defined')
-}
-
-if (!process.env.REPLICA_UUID) {
-  throw new Error('REPLICA_UUID is not defined')
-}
-
-if (!process.env.OWNER_ID) {
-  throw new Error('OWNER_ID is not defined')
-}
-
-const bot = new BotClient(process.env.BOT_TOKEN, process.env.REPLICA_UUID, process.env.OWNER_ID)
+const bot = new BotClient(
+  config.BOT_TOKEN.getSensitiveValue(),
+  config.REPLICA_UUID,
+  config.OWNER_ID,
+)
 
 const stopBot = () => {
   bot

@@ -1,12 +1,12 @@
 import cluster from 'node:cluster'
+import type { Env } from '@sensay/telegram-bot'
+import type { Logger, TypedWorker, WorkerEventMap } from '@sensay/telegram-shared'
+import { Signal, WorkerEvent } from '@sensay/telegram-shared'
 import * as Sentry from '@sentry/node'
 import type { BotDefinition } from './bot_definition'
 import { BotIPCChannel } from './bot_ipc_channel'
-import { config as clusterConfig } from './config/cluster'
-import type { Env } from './config/worker'
-import type { Logger } from './logging/logger'
-import { Signal } from './types/process'
-import { type TypedWorker, WorkerEvent, type WorkerEventMap } from './types/worker'
+import { config as clusterConfig } from './config'
+
 import { chaosTest } from './utils/chaos'
 import { withTimeout } from './utils/timer'
 
@@ -66,10 +66,19 @@ export class BotHost {
       VERCEL_PROTECTION_BYPASS_KEY: clusterConfig.VERCEL_PROTECTION_BYPASS_KEY.getSensitiveValue(),
       OPENAI_API_KEY: clusterConfig.OPENAI_API_KEY.getSensitiveValue(),
       ELEVENLABS_API_KEY: clusterConfig.ELEVENLABS_API_KEY.getSensitiveValue(),
-    } satisfies Omit<Env, 'BOT_TOKEN' | 'OPENAI_API_KEY' | 'ELEVENLABS_API_KEY'> & {
+    } satisfies Omit<
+      Env,
+      | 'BOT_TOKEN'
+      | 'SENSAY_API_KEY'
+      | 'OPENAI_API_KEY'
+      | 'ELEVENLABS_API_KEY'
+      | 'VERCEL_PROTECTION_BYPASS_KEY'
+    > & {
       BOT_TOKEN: string
+      SENSAY_API_KEY: string
       OPENAI_API_KEY: string
       ELEVENLABS_API_KEY: string
+      VERCEL_PROTECTION_BYPASS_KEY: string
     })
 
     const botHost = new BotHost(botDefinition, worker, config)

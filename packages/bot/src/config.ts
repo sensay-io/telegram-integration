@@ -1,8 +1,13 @@
-import { process } from '@/types/process'
+import { env } from 'node:process'
+import {
+  Environment,
+  SensitiveStringSchema,
+  config as commonConfig,
+  envSchema as commonEnvSchema,
+  process,
+} from '@sensay/telegram-shared'
+import * as Sentry from '@sentry/node'
 import { z } from 'zod'
-import { config as commonConfig, envSchema as commonEnvSchema } from './common'
-import { Environment } from './environment'
-import { SensitiveStringSchema } from './sensitive_string'
 
 const envSchema = z
   .object({
@@ -10,9 +15,6 @@ const envSchema = z
     REPLICA_UUID: z.string(),
     REPLICA_SLUG: z.string().optional(),
     OWNER_ID: z.string(),
-    SENSAY_API_URL: z.string(),
-    SENSAY_API_KEY: z.string(),
-    VERCEL_PROTECTION_BYPASS_KEY: z.string(),
     OPENAI_API_KEY: SensitiveStringSchema,
     ELEVENLABS_API_KEY: SensitiveStringSchema,
     SENTRY_TRACE_HEADER: z.string().optional(),
@@ -22,8 +24,8 @@ const envSchema = z
 
 export type Env = z.infer<typeof envSchema>
 
-function createConfig() {
-  const parsed = envSchema.safeParse(process.env)
+async function createConfig() {
+  const parsed = envSchema.safeParse(env)
 
   const logger = commonConfig.logger
 
@@ -36,12 +38,19 @@ function createConfig() {
       )
     }
   } else {
-    logger.fatal('Environment validation failed:')
+    logger.error('Environment validation failed:')
     logger.table(parsed.error.issues)
+    await Sentry.flush()
     process.exit(-1)
   }
 
   const { NODE_ENV, ...data } = parsed.data
+
+  Sentry.init({
+    dsn: data.SENTRY_DSN,
+    tracesSampleRate: data.SENTRY_TRACES_SAMPLERATE,
+    environment: env.RAILWAY_ENVIRONMENT_NAME ?? NODE_ENV,
+  })
 
   return Object.freeze({
     ...commonConfig,
@@ -51,4 +60,4 @@ function createConfig() {
 
 export type WorkerConfig = ReturnType<typeof createConfig>
 
-export const config = createConfig()
+export const config = await createConfig()

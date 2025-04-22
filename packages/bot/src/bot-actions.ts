@@ -1,6 +1,10 @@
 import { type AutoChatActionFlavor, autoChatAction } from '@grammyjs/auto-chat-action'
 import { type FileFlavor, hydrateFiles } from '@grammyjs/files'
 import { limit } from '@grammyjs/ratelimiter'
+// TODO: Replace @grammyjs/transformer-throttler with @grammyjs/auto-retry
+// @grammyjs/transformer-throttler is unmaintained.
+// The docs recommend using the auto-retry plugin instead:
+// https://grammy.dev/plugins/transformer-throttler
 import { apiThrottler } from '@grammyjs/transformer-throttler'
 import { Bot, type Context } from 'grammy'
 import type { Api, RawApi } from 'grammy'

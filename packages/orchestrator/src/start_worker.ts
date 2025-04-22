@@ -1,10 +1,9 @@
 import cluster from 'node:cluster'
 import path from 'node:path'
-import { BotClient } from '@sensay/telegram-bot'
+import { BotClient, config } from '@sensay/telegram-bot'
+import { Event, Signal, process } from '@sensay/telegram-shared'
 import type { BotDefinition } from './bot_definition'
 import { BotWorker } from './bot_worker'
-import { config } from './config/worker'
-import { Event, Signal, process } from './types/process'
 
 /**
  * This file is used to start a child process for a bot.
@@ -23,7 +22,7 @@ const logger = config.logger.child({
 })
 
 if (!cluster.isWorker || !cluster.worker) {
-  logger.fatal('Bot worker must be initialized from a worker process')
+  await logger.fatal('Bot worker must be initialized from a worker process')
   process.exit(1)
 }
 
@@ -58,17 +57,17 @@ const shutdown = (signal: Signal) => {
 
 process.on(Signal.SIGINT, () => shutdown(Signal.SIGINT))
 process.on(Signal.SIGTERM, () => shutdown(Signal.SIGTERM))
-process.on(Event.UNCAUGHT_EXCEPTION, (error) => {
-  logger.error(error, Event.UNCAUGHT_EXCEPTION)
+process.on(Event.UNCAUGHT_EXCEPTION, async (error) => {
+  await logger.fatal(error, Event.UNCAUGHT_EXCEPTION)
   process.exit(1)
 })
-process.on(Event.UNHANDLED_REJECTION, (error) => {
-  logger.error(error, Event.UNHANDLED_REJECTION)
+process.on(Event.UNHANDLED_REJECTION, async (error) => {
+  await logger.fatal(error, Event.UNHANDLED_REJECTION)
   process.exit(1)
 })
 
 await botWorker.start()
 
-// The lack of any exports makes Sentry bundler plugin unhappy
+// The lack of default export makes Sentry bundler plugin unhappy
 // https://github.com/getsentry/sentry-javascript-bundler-plugins/issues/471
 export default {}
