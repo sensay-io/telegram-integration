@@ -52,7 +52,7 @@ export function botsPOST(orchestrator: Orchestrator): OpenAPIHono {
 
     const botDefinition = parseResult.data
 
-    await orchestrator.addBot(botDefinition)
+    await orchestrator.addBotUnchecked(botDefinition)
 
     return c.json(null, HTTPStatusCodes.CREATED, {
       Location: `/bots/${botDefinition.replicaUUID}`,
