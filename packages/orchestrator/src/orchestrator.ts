@@ -21,6 +21,16 @@ export enum BotCRUDOperationResult {
   NotFound = 'not_found',
 }
 
+type Replica = {
+  uuid: string
+  slug: string
+  ownerID: string
+  telegram_integration: {
+    token: string | null
+    service_name: string | null
+  } | null
+}
+
 /**
  * The Orchestrator acts as a central coordinator for all bot instances.
  * The goal of the Orchestrator is to ensure that exactly one instance of each bot is running and healthy.
@@ -189,27 +199,57 @@ export class Orchestrator {
   }
 
   private async loadBotsDefinitions(): Promise<Map<ReplicaUUID, BotDefinition>> {
+    const botsDefinitions = new Map<ReplicaUUID, BotDefinition>()
+
+    for await (const replicas of this.loadAllReplicas()) {
+      for (const replica of replicas) {
+        if (replica.telegram_integration?.service_name !== this.config.telegramServiceName) {
+          continue
+        }
+
+        const botDefinition = {
+          replicaUUID: replica.uuid,
+          replicaSlug: replica.slug,
+          ownerID: replica.ownerID,
+          token: new SensitiveString(replica.telegram_integration?.token ?? ''),
+        } satisfies BotDefinition
+        botsDefinitions.set(botDefinition.replicaUUID, botDefinition)
+      }
+    }
+
+    return botsDefinitions
+  }
+
+  private async *loadAllReplicas(): AsyncIterable<Replica[]> {
+    const maxPages = 100 // precaution against an infinite loop
+    let totalPages = 0
+    let pageIndex = 1 // page_index in the API starts with 1
+    const pageSize = 100
+    do {
+      const { total, items } = await this.loadReplicasPage(pageIndex, pageSize)
+      totalPages = Math.ceil(total / pageSize)
+      this.logger.trace(`Processing replicas page ${pageIndex} of ${totalPages}`)
+      pageIndex++
+      yield items
+    } while (pageIndex <= totalPages && pageIndex <= maxPages)
+  }
+
+  private async loadReplicasPage(
+    pageIndex: number,
+    pageSize: number,
+  ): Promise<{
+    total: number
+    items: Replica[]
+  }> {
     const replicas = await getV1Replicas({
       query: {
         integration: 'telegram',
+        page_index: pageIndex,
+        page_size: pageSize,
       },
     })
 
-    const botsDefinitions: [ReplicaUUID, BotDefinition][] = replicas.data.items
-      .filter(
-        (replica) => replica.telegram_integration?.service_name === this.config.telegramServiceName,
-      )
-      .map((replica) => {
-        return [
-          replica.uuid,
-          {
-            replicaUUID: replica.uuid,
-            replicaSlug: replica.slug,
-            ownerID: replica.ownerID,
-            token: new SensitiveString(replica.telegram_integration?.token ?? ''),
-          } satisfies BotDefinition,
-        ]
-      })
-    return new Map(botsDefinitions)
+    const { total, items } = replicas.data
+    return { total, items }
   }
 }
