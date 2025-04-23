@@ -221,7 +221,6 @@ export class Orchestrator {
   }
 
   private async *loadAllReplicas(): AsyncIterable<Replica[]> {
-    const maxPages = 100 // precaution against an infinite loop
     let totalPages = 0
     let pageIndex = 1 // page_index in the API starts with 1
     const pageSize = 100
@@ -231,7 +230,7 @@ export class Orchestrator {
       this.logger.trace(`Processing replicas page ${pageIndex} of ${totalPages}`)
       pageIndex++
       yield items
-    } while (pageIndex <= totalPages && pageIndex <= maxPages)
+    } while (pageIndex <= totalPages)
   }
 
   private async loadReplicasPage(
