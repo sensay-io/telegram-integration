@@ -2,8 +2,8 @@ import cluster from 'node:cluster'
 import path from 'node:path'
 import { BotClient, config } from '@sensay/telegram-bot'
 import { Event, Signal, process } from '@sensay/telegram-shared'
-import type { BotDefinition } from './bot_definition'
-import { BotWorker } from './bot_worker'
+import type { BotDefinition } from './bot-definition'
+import { BotWorker } from './bot-worker'
 
 /**
  * This file is used to start a child process for a bot.

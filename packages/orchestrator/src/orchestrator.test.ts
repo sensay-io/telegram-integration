@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { Orchestrator } from './orchestrator'
 
 cluster.setupPrimary({
-  exec: path.resolve(import.meta.dirname, 'start_worker.ts'),
+  exec: path.resolve(import.meta.dirname, 'start-worker.ts'),
 })
 
 const FAKE_REPLICAS = [

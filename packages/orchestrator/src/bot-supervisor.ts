@@ -1,6 +1,6 @@
 import { type Logger, WorkerEvent } from '@sensay/telegram-shared'
-import type { BotDefinition } from './bot_definition'
-import { BotHost } from './bot_host'
+import type { BotDefinition } from './bot-definition'
+import { BotHost } from './bot-host'
 import { traceAll } from './logging/decorators'
 import { chaosTest } from './utils/chaos'
 

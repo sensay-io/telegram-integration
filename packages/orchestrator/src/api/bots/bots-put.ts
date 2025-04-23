@@ -1,5 +1,5 @@
 import { createRouter } from '@/api/router'
-import { BotDefinitionSchema } from '@/bot_definition'
+import { BotDefinitionSchema } from '@/bot-definition'
 import { BotCRUDOperationResult, type Orchestrator } from '@/orchestrator'
 import { type OpenAPIHono, type RouteHandler, createRoute } from '@hono/zod-openapi'
 import { assertNever } from '@sensay/telegram-shared'

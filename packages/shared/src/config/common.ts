@@ -3,7 +3,7 @@ import { process } from '@/types/process'
 import * as Sentry from '@sentry/node'
 import { z } from 'zod'
 import { Environment } from './environment'
-import { SensitiveStringSchema } from './sensitive_string'
+import { SensitiveStringSchema } from './sensitive-string'
 
 export const envSchema = z.object({
   LOG_LEVEL: z.nativeEnum(LoggerLevel).default(LoggerLevel.INFO),
