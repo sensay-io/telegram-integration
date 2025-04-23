@@ -1,7 +1,7 @@
 import type { BotClient } from '@sensay/telegram-bot'
 import type { Logger, TypedWorker } from '@sensay/telegram-shared'
-import type { BotDefinition } from './bot_definition'
-import { BotIPCChannel, type HealthCheckResponse } from './bot_ipc_channel'
+import type { BotDefinition } from './bot-definition'
+import { BotIPCChannel, type HealthCheckResponse } from './bot-ipc-channel'
 import { traceAll } from './logging/decorators'
 import { chaosTest } from './utils/chaos'
 

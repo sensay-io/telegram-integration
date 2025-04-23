@@ -1,4 +1,4 @@
-import { ReplicaUUIDSchema } from '@/bot_definition'
+import { ReplicaUUIDSchema } from '@/bot-definition'
 import { z } from 'zod'
 
 export const ReplicaUUIDParameter = 'replicaUUID'

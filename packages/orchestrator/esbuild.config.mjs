@@ -3,7 +3,7 @@ import { sentryEsbuildPlugin } from '@sentry/esbuild-plugin'
 import * as esbuild from 'esbuild'
 
 await esbuild.build({
-  entryPoints: ['src/index.ts', 'src/start_worker.ts'],
+  entryPoints: ['src/index.ts', 'src/start-worker.ts'],
   outdir: 'dist',
   packages: 'bundle',
   target: 'node22',

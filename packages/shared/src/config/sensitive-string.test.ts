@@ -1,6 +1,6 @@
 import { inspect } from 'node:util'
 import { describe, expect, it } from 'vitest'
-import { SensitiveString } from './sensitive_string'
+import { SensitiveString } from './sensitive-string'
 
 describe('SensitiveString', () => {
   it('should return the sensitive value', () => {

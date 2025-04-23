@@ -1,6 +1,6 @@
 import { type Logger, SensitiveString, getV1Replicas } from '@sensay/telegram-shared'
-import type { BotDefinition, ReplicaSlug, ReplicaUUID } from './bot_definition'
-import { BotStatus, type BotStatusInfo, BotSupervisor } from './bot_supervisor'
+import type { BotDefinition, ReplicaSlug, ReplicaUUID } from './bot-definition'
+import { BotStatus, type BotStatusInfo, BotSupervisor } from './bot-supervisor'
 import { traceAll } from './logging/decorators'
 
 export type OrchestratorConfig = {

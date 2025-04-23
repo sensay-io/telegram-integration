@@ -1,5 +1,5 @@
 import { createRouter } from '@/api/router'
-import { BotDefinitionSchema } from '@/bot_definition'
+import { BotDefinitionSchema } from '@/bot-definition'
 import type { Orchestrator } from '@/orchestrator'
 import { type OpenAPIHono, type RouteHandler, createRoute } from '@hono/zod-openapi'
 import { HTTPStatusCodes, commonErrorResponses } from './common'

@@ -1,7 +1,7 @@
 import cluster from 'node:cluster'
 import path from 'node:path'
 import { Event, Signal, process } from '@sensay/telegram-shared'
-import { OrchestratorAPI } from './api/orchestrator_api'
+import { OrchestratorAPI } from './api/orchestrator-api'
 import { config } from './config'
 import { Orchestrator } from './orchestrator'
 
@@ -15,7 +15,7 @@ if (!cluster.isPrimary) {
 }
 
 cluster.setupPrimary({
-  exec: path.resolve(import.meta.dirname, 'start_worker.js'),
+  exec: path.resolve(import.meta.dirname, 'start-worker.js'),
 })
 
 process.on(Signal.SIGINT, () => shutdown(Signal.SIGINT))
