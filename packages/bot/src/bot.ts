@@ -132,6 +132,7 @@ export class BotClient {
 async function createUserIfNotExist(userId: string) {
   // First, try to get the user using the users/me endpoint
   const getUserResponse = await getV1UsersMe({
+    throwOnError: false,
     headers: {
       'X-USER-ID': userId,
       'X-USER-ID-TYPE': 'telegram',
@@ -156,6 +157,7 @@ async function createUserIfNotExist(userId: string) {
 
 async function createUser(userId: string) {
   const createUserResponse = await postV1Users({
+    throwOnError: false,
     body: {
       id: userId,
       linkedAccounts: [
