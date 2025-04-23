@@ -21,7 +21,8 @@ const route = createRoute({
     body: {
       content: {
         'application/json': {
-          schema: BotDefinitionSchema.partial(),
+          // TODO: Accept partial bot definition
+          schema: BotDefinitionSchema,
         },
       },
     },
@@ -50,7 +51,7 @@ export function botsPUT(orchestrator: Orchestrator): OpenAPIHono {
   const handler: RouteHandler<typeof route> = async (c) => {
     const replicaUUID = c.req.param(ReplicaUUIDParameter)
 
-    const parseResult = BotDefinitionSchema.partial().safeParse(await c.req.json())
+    const parseResult = BotDefinitionSchema.safeParse(await c.req.json())
     if (!parseResult.success) {
       return c.json(
         {
@@ -64,16 +65,13 @@ export function botsPUT(orchestrator: Orchestrator): OpenAPIHono {
 
     const botDefinition = parseResult.data
 
-    const result = await orchestrator.updateBot({
-      replicaUUID,
-      ...botDefinition,
-    })
+    const result = await orchestrator.updateBotUnchecked(botDefinition)
     switch (result) {
       case BotCRUDOperationResult.Updated:
         return c.body(null, HTTPStatusCodes.NO_CONTENT)
       case BotCRUDOperationResult.Created:
         return c.json(null, HTTPStatusCodes.CREATED, {
-          Location: `/bots/${botDefinition.replicaUUID}`,
+          Location: `/bots/${replicaUUID}`,
         })
       case BotCRUDOperationResult.NotFound:
         return c.json(null, HTTPStatusCodes.NOT_FOUND)

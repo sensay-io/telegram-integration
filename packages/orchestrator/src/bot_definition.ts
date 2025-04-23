@@ -3,6 +3,7 @@ import { SensitiveStringSchema } from '@sensay/telegram-shared'
 import { z } from 'zod'
 
 export type ReplicaUUID = string
+export type ReplicaSlug = string
 export type BotToken = string
 
 export const ReplicaUUIDSchema =
@@ -10,7 +11,7 @@ export const ReplicaUUIDSchema =
 
 export const BotDefinitionSchema = z.object({
   replicaUUID: ReplicaUUIDSchema,
-  replicaSlug: z.string().optional(),
+  replicaSlug: z.string(),
   ownerID: z.string(),
   token: SensitiveStringSchema,
 })

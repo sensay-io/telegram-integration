@@ -44,7 +44,7 @@ export class BotSupervisor {
   private isHealthy = false
 
   constructor(
-    private readonly botDefinition: BotDefinition,
+    readonly botDefinition: BotDefinition,
     private readonly config: BotSupervisorConfig,
   ) {
     this.logger = config.logger.child({

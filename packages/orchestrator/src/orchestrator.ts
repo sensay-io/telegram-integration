@@ -1,5 +1,5 @@
 import { type Logger, SensitiveString, getV1Replicas } from '@sensay/telegram-shared'
-import type { BotDefinition, ReplicaUUID } from './bot_definition'
+import type { BotDefinition, ReplicaSlug, ReplicaUUID } from './bot_definition'
 import { BotStatus, type BotStatusInfo, BotSupervisor } from './bot_supervisor'
 import { traceAll } from './logging/decorators'
 
@@ -29,6 +29,14 @@ type Replica = {
     token: string | null
     service_name: string | null
   } | null
+}
+
+class StateSynchronizationError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = StateSynchronizationError.name
+    Error.captureStackTrace(this, StateSynchronizationError)
+  }
 }
 
 /**
@@ -92,7 +100,60 @@ export class Orchestrator {
     await Promise.allSettled(this.botsSupervisors.values().map((supervisor) => supervisor.stop()))
   }
 
-  async addBot(botDefinition: BotDefinition): Promise<BotCRUDOperationResult.Created> {
+  /**
+   * Adds a bot to the Orchestrator after loading its definition from the API.
+   */
+  async addBot(
+    replicaUUID: ReplicaUUID,
+    replicaSlug: ReplicaSlug,
+  ): Promise<BotCRUDOperationResult.Created | BotCRUDOperationResult.NotFound> {
+    const botDefinition = await this.loadBotDefinition(replicaSlug)
+    if (botDefinition?.replicaUUID !== replicaUUID) {
+      throw new StateSynchronizationError(`Replica ${replicaUUID} not found by slug ${replicaSlug}`)
+    }
+
+    return this.addBotUnchecked(botDefinition)
+  }
+
+  /**
+   * Updates a bot in the Orchestrator after loading its definition from the API.
+   */
+  async updateBot(
+    replicaUUID: ReplicaUUID,
+    replicaSlug: ReplicaSlug,
+  ): Promise<
+    | BotCRUDOperationResult.Created
+    | BotCRUDOperationResult.Updated
+    | BotCRUDOperationResult.NotFound
+  > {
+    const botDefinition = await this.loadBotDefinition(replicaSlug)
+    if (botDefinition?.replicaUUID !== replicaUUID) {
+      throw new StateSynchronizationError(`Replica ${replicaUUID} not found by slug ${replicaSlug}`)
+    }
+
+    return this.updateBotUnchecked(botDefinition)
+  }
+
+  /**
+   * Deletes a bot from the Orchestrator after loading its definition from the API.
+   */
+  async deleteBot(
+    replicaUUID: ReplicaUUID,
+    replicaSlug: ReplicaSlug,
+  ): Promise<BotCRUDOperationResult.Deleted | BotCRUDOperationResult.NotFound> {
+    const botDefinition = await this.loadBotDefinition(replicaSlug)
+    if (botDefinition?.replicaUUID === replicaUUID) {
+      throw new StateSynchronizationError(`Replica ${replicaSlug} still has a Telegram integration`)
+    }
+
+    return this.deleteBotUnchecked(replicaUUID)
+  }
+
+  /**
+   * Adds a bot to the Orchestrator without first checking the API state.
+   * Should be called from the checked methods and the Orchestrator API.
+   */
+  async addBotUnchecked(botDefinition: BotDefinition): Promise<BotCRUDOperationResult.Created> {
     const botSupervisor = new BotSupervisor(botDefinition, {
       healthCheckTimeoutMs: this.config.healthCheckTimeoutMs,
       healthCheckIntervalMs: this.config.healthCheckIntervalMs,
@@ -102,13 +163,18 @@ export class Orchestrator {
     })
 
     this.botsSupervisors.set(botDefinition.replicaUUID, botSupervisor)
+    this.botsDefinitions.set(botDefinition.replicaUUID, botDefinition)
 
     await botSupervisor.start()
 
     return BotCRUDOperationResult.Created
   }
 
-  async updateBot(
+  /**
+   * Updates a bot in the Orchestrator without first checking the API state.
+   * Should be called from the checked methods and the Orchestrator API.
+   */
+  async updateBotUnchecked(
     botDefinitionUpdate: Pick<BotDefinition, 'replicaUUID'> & Partial<BotDefinition>,
   ): Promise<
     | BotCRUDOperationResult.Created
@@ -125,7 +191,6 @@ export class Orchestrator {
     const newBotDefinition = Object.assign({}, existingBotDefinition, botDefinitionUpdate, {
       token,
     })
-
     // TODO: Implement general equality function
     if (
       newBotDefinition.replicaUUID === existingBotDefinition?.replicaUUID &&
@@ -137,22 +202,27 @@ export class Orchestrator {
       return BotCRUDOperationResult.Updated
     }
 
-    const deleteResult = await this.deleteBot(newBotDefinition.replicaUUID)
+    const deleteResult = await this.deleteBotUnchecked(newBotDefinition.replicaUUID)
 
-    await this.addBot(newBotDefinition)
+    await this.addBotUnchecked(newBotDefinition)
 
     return deleteResult === BotCRUDOperationResult.Deleted
       ? BotCRUDOperationResult.Updated
       : BotCRUDOperationResult.Created
   }
 
-  async deleteBot(
+  /**
+   * Deletes a bot from the Orchestrator without first checking the API state.
+   * Should be called from the checked methods and the Orchestrator API.
+   */
+  async deleteBotUnchecked(
     replicaUUID: ReplicaUUID,
   ): Promise<BotCRUDOperationResult.Deleted | BotCRUDOperationResult.NotFound> {
     const botSupervisor = this.botsSupervisors.get(replicaUUID)
     if (botSupervisor) {
       await botSupervisor.stop()
       this.botsSupervisors.delete(replicaUUID)
+      this.botsDefinitions.delete(replicaUUID)
       return BotCRUDOperationResult.Deleted
     }
 
@@ -176,24 +246,27 @@ export class Orchestrator {
     for (const botDefinition of this.botsDefinitions.values()) {
       try {
         if (this.botsSupervisors.has(botDefinition.replicaUUID)) {
-          await this.updateBot(botDefinition)
+          await this.updateBot(botDefinition.replicaUUID, botDefinition.replicaSlug)
         } else {
-          await this.addBot(botDefinition)
+          await this.addBot(botDefinition.replicaUUID, botDefinition.replicaSlug)
         }
       } catch (error) {
         this.logger.error(error as Error, `Failed to reload bot ${botDefinition.replicaSlug}`)
       }
     }
 
-    for (const replicaUUID of this.botsSupervisors.keys()) {
-      if (this.botsDefinitions.has(replicaUUID)) {
+    const runningBotsDefinitions = this.botsSupervisors
+      .values()
+      .map((botSupervisor) => botSupervisor.botDefinition)
+    for (const botDefinition of runningBotsDefinitions) {
+      if (this.botsDefinitions.has(botDefinition.replicaUUID)) {
         continue
       }
 
       try {
-        await this.deleteBot(replicaUUID)
+        await this.deleteBot(botDefinition.replicaUUID, botDefinition.replicaSlug)
       } catch (error) {
-        this.logger.error(error as Error, `Failed to delete bot ${replicaUUID}`)
+        this.logger.error(error as Error, `Failed to delete bot ${botDefinition.replicaSlug}`)
       }
     }
   }
@@ -211,13 +284,33 @@ export class Orchestrator {
           replicaUUID: replica.uuid,
           replicaSlug: replica.slug,
           ownerID: replica.ownerID,
-          token: new SensitiveString(replica.telegram_integration?.token ?? ''),
+          token: new SensitiveString(replica.telegram_integration.token ?? ''),
         } satisfies BotDefinition
         botsDefinitions.set(botDefinition.replicaUUID, botDefinition)
       }
     }
 
     return botsDefinitions
+  }
+
+  private async loadBotDefinition(replicaSlug: ReplicaSlug): Promise<BotDefinition | null> {
+    const replicas = await this.loadReplicasPage(1, 1, replicaSlug)
+    if (replicas.items.length === 0) {
+      return null
+    }
+
+    const replica = replicas.items[0]
+    if (replica.telegram_integration?.service_name !== this.config.telegramServiceName) {
+      return null
+    }
+
+    const botDefinition = {
+      replicaUUID: replica.uuid,
+      replicaSlug: replica.slug,
+      ownerID: replica.ownerID,
+      token: new SensitiveString(replica.telegram_integration.token ?? ''),
+    } satisfies BotDefinition
+    return botDefinition
   }
 
   private async *loadAllReplicas(): AsyncIterable<Replica[]> {
@@ -236,6 +329,7 @@ export class Orchestrator {
   private async loadReplicasPage(
     pageIndex: number,
     pageSize: number,
+    replicaSlug?: ReplicaSlug,
   ): Promise<{
     total: number
     items: Replica[]
@@ -245,6 +339,7 @@ export class Orchestrator {
         integration: 'telegram',
         page_index: pageIndex,
         page_size: pageSize,
+        slug: replicaSlug,
       },
     })
 

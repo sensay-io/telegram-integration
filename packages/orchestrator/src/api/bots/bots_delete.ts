@@ -33,7 +33,7 @@ export function botsDELETE(orchestrator: Orchestrator): OpenAPIHono {
   const handler: RouteHandler<typeof route> = async (c) => {
     const replicaUUID = c.req.param(ReplicaUUIDParameter)
 
-    const result = await orchestrator.deleteBot(replicaUUID)
+    const result = await orchestrator.deleteBotUnchecked(replicaUUID)
     switch (result) {
       case BotCRUDOperationResult.Deleted:
         return c.body(null, HTTPStatusCodes.NO_CONTENT)
