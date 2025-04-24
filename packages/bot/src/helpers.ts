@@ -9,7 +9,7 @@ import { createOpenAI } from '@ai-sdk/openai'
 import { generateObject } from 'ai'
 import { codeBlock } from 'common-tags'
 import removeMd from 'remove-markdown'
-import { z } from 'zod'
+import { object, z } from 'zod'
 import { NonCriticalError } from './bot-actions'
 import { config } from './config'
 
@@ -89,34 +89,37 @@ export async function ctxReply(
 }
 
 export async function voiceRequest(input: string) {
-  const personaSystemMessage = codeBlock`You are tasked with analyzing input to identify mentions of voice messages. Your goals are to determine whether the input includes a request made via a voice message.
+  const personaSystemMessage = codeBlock`You are tasked with analyzing input to identify mentions of voice messages. Your goals are to determine whether the input includes a request made via a voice message and filter out the reference of asking for a voice message.
 
- The object you will return will have this schema  {"voice":boolean}.
+ The object you will return will have this schema  {"voice":boolean, "text":string}.
 
 Voice messages:
   - Check the provided context for any mention of voice messages.
-  - Return an object with key 'voice' indicating whether a voice message is discussed.
+  - Return an object with key 'voice' and 'text' indicating whether a voice message is discussed and the text without the reference of asking for a voice message.
   - Example:
-    - If they say "what is the price of the car" you will return '{"voice":false}'.
-    - If they say "hey OpenAI, tell me what time it is with a voice message" you will return '{"voice":true}'.
+    - If they say "what is the price of the car" you will return '{"voice":false , "text": "what is the price of the car"}'.
+    - If they say "hey OpenAI, tell me what time it is with a voice message" you will return '{"voice":true, "text": "hey OpenAI, tell me what time it is"}'.
 
 
-Pay attention to the context to correctly identify whether it is a voice message request. Return an object with key 'voice' in that case.
+Pay attention to the context to correctly identify whether it is a voice message request. Return an object with key 'voice' and 'text' in that case.
 
 Examples:
-- If they say "hey OpenAI, tell me what time it is with a voice message" you will return '{"voice":true}'.
-- If they say "what is the price of the car" you will return '{"voice":false}'.
-- If they say "what's the price of the SNSY token" you will return '{"voice":false}'.
-- If they say "hey, send me a voice message with the price of the SNSY token" you will return '{"voice":true}'.
+- If they say "hey OpenAI, tell me what time it is with a voice message" you will return '{"voice":true, "text": "hey OpenAI, tell me what time it is"}'.
+- If they say "what is the price of the car" you will return '{"voice":false, "text": "what is the price of the car"}'.
+- If they say "what's the price of the SNSY token" you will return '{"voice":false, "text": "what's the price of the SNSY token"}'.
+- If they say "hey, send me a voice message with the price of the SNSY token" you will return '{"voice":true, "text": "hey, send the price of the SNSY token"}'.
  `
 
   const schema = z.object({
     voice: z.boolean(),
+    text: z.string(),
   })
 
   const openai = createOpenAI({ apiKey: config.OPENAI_API_KEY.getSensitiveValue() })
 
-  const { object }: { object: { voice: boolean } } = await generateObject({
+  const {
+    object: { voice, text },
+  }: { object: { voice: boolean; text: string } } = await generateObject({
     model: openai('gpt-4o-mini'),
     system: personaSystemMessage,
     prompt: input,
@@ -126,7 +129,7 @@ Examples:
     mode: 'json',
   })
 
-  return { ...object }
+  return { voice_requested: voice, text }
 }
 
 export function parse(message: Message & Update.NonChannel): ParsedTelegramChat | undefined {
