@@ -108,13 +108,13 @@ export const botActions = ({
         throw new NonCriticalError('No message was provided')
       }
 
-      const { voice } = await voiceRequest(messageText)
+      const { voice_requested, text } = await voiceRequest(messageText)
 
-      if (voice) {
+      if (voice_requested) {
         await sendVoiceRecording({
           ctx,
           parsedMessage,
-          messageText: userMessage,
+          messageText: text,
           replicaUuid,
           elevenlabsId,
           needsReply,
@@ -168,7 +168,7 @@ export const botActions = ({
 
       isPlanValid(overridePlan, ownerID)
 
-      const { voice } = await voiceRequest(messageText)
+      const { voice_requested, text } = await voiceRequest(messageText)
 
       const chatType = isPrivateChat ? 'private' : 'group'
       const replyParameters = getReplyParameters(chatType, {
@@ -179,11 +179,11 @@ export const botActions = ({
         isTopicMessage,
       })
 
-      if (voice) {
+      if (voice_requested) {
         await sendVoiceRecording({
           ctx: ctx,
           parsedMessage,
-          messageText,
+          messageText: text,
           replicaUuid,
           elevenlabsId,
           needsReply,
