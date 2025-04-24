@@ -25,6 +25,7 @@ type Replica = {
   uuid: string
   slug: string
   ownerID: string
+  elevenLabsID?: string | null
   telegram_integration: {
     token: string | null
     service_name: string | null
@@ -279,12 +280,7 @@ export class Orchestrator {
         continue
       }
 
-      const botDefinition = {
-        replicaUUID: replica.uuid,
-        replicaSlug: replica.slug,
-        ownerID: replica.ownerID,
-        token: new SensitiveString(replica.telegram_integration.token ?? ''),
-      } satisfies BotDefinition
+      const botDefinition = this.replicaToBotDefinition(replica)
       botsDefinitions.set(botDefinition.replicaUUID, botDefinition)
     }
 
@@ -302,11 +298,16 @@ export class Orchestrator {
       return null
     }
 
+    return this.replicaToBotDefinition(replica)
+  }
+
+  private replicaToBotDefinition(replica: Replica): BotDefinition {
     const botDefinition = {
       replicaUUID: replica.uuid,
       replicaSlug: replica.slug,
       ownerID: replica.ownerID,
-      token: new SensitiveString(replica.telegram_integration.token ?? ''),
+      token: new SensitiveString(replica.telegram_integration?.token ?? ''),
+      elevenLabsID: replica.elevenLabsID ?? undefined,
     } satisfies BotDefinition
     return botDefinition
   }

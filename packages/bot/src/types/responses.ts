@@ -31,7 +31,7 @@ export type SendVoiceRecordingArgs = {
   parsedMessage: ParsedTelegramChat
   messageText: string
   replicaUuid: string
-  elevenlabsId: string | null
+  elevenlabsId: string | undefined
   replyParameters: ReplyParameterType<Methods<RawApi>>
   needsReply: boolean
   messageThreadId: number | undefined

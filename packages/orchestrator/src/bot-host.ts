@@ -55,6 +55,7 @@ export class BotHost {
       REPLICA_UUID: botDefinition.replicaUUID,
       REPLICA_SLUG: botDefinition.replicaSlug,
       OWNER_ID: botDefinition.ownerID,
+      ELEVENLABS_ID: botDefinition.elevenLabsID,
       NODE_ENV: clusterConfig.NODE_ENV,
       LOG_LEVEL: clusterConfig.LOG_LEVEL,
       SENSAY_API_URL: clusterConfig.SENSAY_API_URL,

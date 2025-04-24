@@ -129,6 +129,10 @@ export async function sendVoiceRecording({
 
   const completionResponse = await postV1ReplicasByReplicaUuidChatCompletionsTelegram({
     path: { replicaUUID: replicaUuid },
+    headers: {
+      'X-USER-ID': ctx.from?.id.toString() || '',
+      'X-USER-ID-TYPE': 'telegram',
+    },
     body: {
       content: messageText,
       skip_chat_history: false,

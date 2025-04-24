@@ -25,6 +25,7 @@ const logger = config.logger.child({
   replicaUUID: config.REPLICA_UUID,
   replicaSlug: config.REPLICA_SLUG,
   ownerID: config.OWNER_ID,
+  elevenLabsID: config.ELEVENLABS_ID,
   PID: process.pid,
 })
 
@@ -38,12 +39,15 @@ const botDefinition = {
   replicaUUID: config.REPLICA_UUID,
   replicaSlug: config.REPLICA_SLUG,
   ownerID: config.OWNER_ID,
+  elevenLabsID: config.ELEVENLABS_ID,
 } satisfies BotDefinition
 
 const botClient = new BotClient(
+  logger,
   botDefinition.token.getSensitiveValue(),
   botDefinition.replicaUUID,
   botDefinition.ownerID,
+  botDefinition.elevenLabsID,
 )
 
 const botWorker = new BotWorker(botDefinition, botClient, cluster.worker, logger)
