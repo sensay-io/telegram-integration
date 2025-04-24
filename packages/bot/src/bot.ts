@@ -30,11 +30,12 @@ export class BotClient {
   }
 
   async isHealthy() {
-    return (await this.isStarted.promise) && this.bot.isInited() && this.bot.isRunning()
+    // return (await this.isStarted.promise) && this.bot.isInited() && this.bot.isRunning()
+    return await this.isStarted.promise
   }
 
   async start() {
-    await this.bot.init()
+    // await this.bot.init()
 
     this.bot.on('message', async (ctx, next) => {
       const parsedMessage = parse(ctx.message)
@@ -88,14 +89,14 @@ export class BotClient {
       await next()
     })
 
-    botActions({
-      bot: this.bot,
-      botUsername: this.bot.botInfo.username,
-      replicaUuid: this.replicaUuid,
-      overridePlan: false,
-      ownerID: this.ownerID,
-      elevenlabsId: null,
-    })
+    // botActions({
+    //   bot: this.bot,
+    //   botUsername: this.bot.botInfo.username,
+    //   replicaUuid: this.replicaUuid,
+    //   overridePlan: false,
+    //   ownerID: this.ownerID,
+    //   elevenlabsId: null,
+    // })
 
     // This will only catch errors in the middlewares.
     // It will not catch errors that are thrown in the internal polling loop methods like fetchUpdates:
@@ -115,13 +116,16 @@ export class BotClient {
       })
     })
 
-    this.bot.start({
-      // Don't await bot.start method. It blocks until the bot is stopped. https://grammy.dev/ref/core/bot#start
-      onStart: (botInfo) => {
-        this.isStarted.resolve(true)
-        console.log(`@${botInfo.username} is running\n`)
-      },
-    })
+    // this.bot.start({
+    //   // Don't await bot.start method. It blocks until the bot is stopped. https://grammy.dev/ref/core/bot#start
+    //   onStart: (botInfo) => {
+    //     this.isStarted.resolve(true)
+    //     console.log(`@${botInfo.username} is running\n`)
+    //   },
+    // })
+
+    this.isStarted.resolve(true)
+    return await this.isStarted.promise
   }
 
   async stop() {
