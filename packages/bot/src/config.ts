@@ -16,6 +16,7 @@ const envSchema = z
     OWNER_ID: z.string(),
     OPENAI_API_KEY: SensitiveStringSchema,
     ELEVENLABS_API_KEY: SensitiveStringSchema,
+    ELEVENLABS_ID: z.string().optional(),
     SENTRY_TRACE_HEADER: z.string().optional(),
     SENTRY_BAGGAGE_HEADER: z.string().optional(),
   })

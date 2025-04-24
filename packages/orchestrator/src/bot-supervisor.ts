@@ -24,6 +24,7 @@ export type BotStatusInfo = {
   replicaUUID: string
   replicaSlug?: string
   ownerID: string
+  elevenLabsID?: string
   status: BotStatus
   pid?: number
 }
@@ -79,6 +80,7 @@ export class BotSupervisor {
       replicaUUID: this.botDefinition.replicaUUID,
       replicaSlug: this.botDefinition.replicaSlug,
       ownerID: this.botDefinition.ownerID,
+      elevenLabsID: this.botDefinition.elevenLabsID,
       status: this.status,
       pid: this.botHost?.PID,
     }

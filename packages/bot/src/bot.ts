@@ -2,6 +2,7 @@ import assert from 'node:assert'
 import type { AutoChatActionFlavor } from '@grammyjs/auto-chat-action'
 import type { FileFlavor } from '@grammyjs/files'
 import {
+  type Logger,
   getV1UsersMe,
   postV1ReplicasByReplicaUuidChatHistoryTelegram,
   postV1Users,
@@ -19,14 +20,20 @@ type MyBot = Bot<MyContext, Api<RawApi>>
 
 export class BotClient {
   private readonly bot: MyBot
-  private readonly replicaUuid: string
-  private readonly ownerID: string
+  private readonly logger: Logger
   private readonly isStarted = Promise.withResolvers<boolean>()
 
-  constructor(botToken: string, replicaUuid: string, ownerID: string) {
-    this.replicaUuid = replicaUuid
-    this.ownerID = ownerID
+  constructor(
+    logger: Logger,
+    botToken: string,
+    private readonly replicaUuid: string,
+    private readonly ownerID: string,
+    private readonly elevenLabsId?: string,
+  ) {
     this.bot = initTelegramBot(botToken)
+    this.logger = logger.child({
+      module: BotClient.name,
+    })
   }
 
   async isHealthy() {
@@ -50,6 +57,19 @@ export class BotClient {
         username,
         reply,
       } = parsedMessage
+
+      this.logger.trace(
+        {
+          messageId,
+          chatId,
+          messageThreadId,
+          type,
+          isBot,
+          userId,
+          username,
+        },
+        'Processing message',
+      )
 
       if (isBot) return
 
@@ -94,7 +114,7 @@ export class BotClient {
       replicaUuid: this.replicaUuid,
       overridePlan: false,
       ownerID: this.ownerID,
-      elevenlabsId: null,
+      elevenlabsId: this.elevenLabsId,
     })
 
     // This will only catch errors in the middlewares.

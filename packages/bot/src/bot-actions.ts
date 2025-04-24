@@ -58,7 +58,7 @@ export type HandleTelegramBotArgs = {
   replicaUuid: string
   overridePlan: boolean
   ownerID: string
-  elevenlabsId: string | null
+  elevenlabsId?: string
 }
 
 export const botActions = ({
@@ -112,7 +112,7 @@ export const botActions = ({
 
       if (voice) {
         await sendVoiceRecording({
-          ctx: ctx,
+          ctx,
           parsedMessage,
           messageText: userMessage,
           replicaUuid,
