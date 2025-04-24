@@ -2567,7 +2567,7 @@ export type GetV1ReplicasByReplicaUuidChatHistoryEmbedResponse = GetV1ReplicasBy
 export type PostV1ReplicasByReplicaUuidChatCompletionsData = {
     body?: {
         /**
-         * Content of the message must be between 1 and 10000 characters.
+         * The prompt to generate completions for, encoded as a string.
          */
         content: string;
         /**
@@ -2756,13 +2756,17 @@ export type PostV1ReplicasByReplicaUuidChatCompletionsResponse = PostV1ReplicasB
 export type PostV1ReplicasByReplicaUuidChatCompletionsTelegramData = {
     body?: {
         /**
-         * Content of the message must be between 1 and 10000 characters.
+         * The prompt to generate completions for, encoded as a string.
          */
         content: string;
         /**
          * When set to true, historical messages are not used in the context, and the message is not appended to the conversation history, thus it is excluded from all future chat context.
          */
         skip_chat_history?: boolean;
+        /**
+         * The URL of the image to be used as context for the completion.
+         */
+        imageURL?: string;
         /**
          * Telegram information about the message
          */
@@ -3829,6 +3833,488 @@ export type GetV1ReplicasByReplicaUuidTrainingFilesUploadResponses = {
 
 export type GetV1ReplicasByReplicaUuidTrainingFilesUploadResponse = GetV1ReplicasByReplicaUuidTrainingFilesUploadResponses[keyof GetV1ReplicasByReplicaUuidTrainingFilesUploadResponses];
 
+export type PostV1ReplicasByReplicaUuidTrainingQuestionAnswerData = {
+    body?: {
+        /**
+         * Array of question-answer pairs to teach your replica
+         */
+        questionsAnswers: Array<{
+            /**
+             * The specific question you want your replica to recognize and answer
+             */
+            question: string;
+            /**
+             * The exact response you want your replica to provide when asked this question
+             */
+            answer: string;
+        }>;
+    };
+    headers?: {
+        'X-API-Version'?: string;
+    };
+    path: {
+        replicaUUID: ReplicaUuidParameter;
+    };
+    query?: never;
+    url: '/v1/replicas/{replicaUUID}/training/question-answer';
+};
+
+export type PostV1ReplicasByReplicaUuidTrainingQuestionAnswerErrors = {
+    /**
+     * Bad Request
+     */
+    400: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the event, useful for reporting
+         */
+        fingerprint?: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+    };
+    /**
+     * Unauthorized
+     */
+    401: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the event, useful for reporting
+         */
+        fingerprint?: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+    };
+    /**
+     * Not Found
+     */
+    404: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+    };
+    /**
+     * Unsupported Media Type
+     */
+    415: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the event, useful for reporting
+         */
+        fingerprint?: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+    };
+    /**
+     * Internal Server Error
+     */
+    500: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the event, useful for reporting
+         */
+        fingerprint?: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+        /**
+         * The inner exception
+         */
+        inner_exception?: {
+            name: string;
+            message: string;
+            cause?: string;
+            stack?: string;
+        };
+    };
+};
+
+export type PostV1ReplicasByReplicaUuidTrainingQuestionAnswerError = PostV1ReplicasByReplicaUuidTrainingQuestionAnswerErrors[keyof PostV1ReplicasByReplicaUuidTrainingQuestionAnswerErrors];
+
+export type PostV1ReplicasByReplicaUuidTrainingQuestionAnswerResponses = {
+    /**
+     * Question Answer Response
+     */
+    200: {
+        /**
+         * Indicates if the knowledge base was successfully updated with the question-answer pairs
+         */
+        success: boolean;
+        /**
+         * Additional information about the result of the operation
+         */
+        message?: string;
+        /**
+         * Number of new question-answer pairs that were added to the knowledge base
+         */
+        insertedCount?: number;
+        /**
+         * Number of question-answer pairs that were not added because they already exist
+         */
+        skippedCount?: number;
+    };
+};
+
+export type PostV1ReplicasByReplicaUuidTrainingQuestionAnswerResponse = PostV1ReplicasByReplicaUuidTrainingQuestionAnswerResponses[keyof PostV1ReplicasByReplicaUuidTrainingQuestionAnswerResponses];
+
+export type DeleteV1ReplicasByReplicaUuidIntegrationsTelegramData = {
+    body?: never;
+    headers?: {
+        'X-API-Version'?: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/v1/replicas/{replicaUUID}/integrations/telegram';
+};
+
+export type DeleteV1ReplicasByReplicaUuidIntegrationsTelegramErrors = {
+    /**
+     * Bad Request
+     */
+    400: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the event, useful for reporting
+         */
+        fingerprint?: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+    };
+    /**
+     * Unauthorized
+     */
+    401: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the event, useful for reporting
+         */
+        fingerprint?: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+    };
+    /**
+     * Not Found
+     */
+    404: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+    };
+    /**
+     * Unsupported Media Type
+     */
+    415: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the event, useful for reporting
+         */
+        fingerprint?: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+    };
+    /**
+     * Internal Server Error
+     */
+    500: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the event, useful for reporting
+         */
+        fingerprint?: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+        /**
+         * The inner exception
+         */
+        inner_exception?: {
+            name: string;
+            message: string;
+            cause?: string;
+            stack?: string;
+        };
+    };
+};
+
+export type DeleteV1ReplicasByReplicaUuidIntegrationsTelegramError = DeleteV1ReplicasByReplicaUuidIntegrationsTelegramErrors[keyof DeleteV1ReplicasByReplicaUuidIntegrationsTelegramErrors];
+
+export type DeleteV1ReplicasByReplicaUuidIntegrationsTelegramResponses = {
+    /**
+     * Telegram integration deleted successfully
+     */
+    200: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+    };
+    /**
+     * Telegram integration deleted successfully, but failed to notify the external integration server. If you are using the default Sensay Telegram Integration, we will retry stopping the bot asynchronously.
+     */
+    202: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * The reason why the operation is accepted instead of returning an immediate success.
+         */
+        message: string;
+    };
+};
+
+export type DeleteV1ReplicasByReplicaUuidIntegrationsTelegramResponse = DeleteV1ReplicasByReplicaUuidIntegrationsTelegramResponses[keyof DeleteV1ReplicasByReplicaUuidIntegrationsTelegramResponses];
+
+export type PostV1ReplicasByReplicaUuidIntegrationsTelegramData = {
+    body?: {
+        /**
+         * Telegram Bot ID
+         */
+        telegram_token: string;
+        /**
+         * Telegram Bot Name
+         */
+        mention: string;
+    };
+    headers?: {
+        'X-API-Version'?: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/v1/replicas/{replicaUUID}/integrations/telegram';
+};
+
+export type PostV1ReplicasByReplicaUuidIntegrationsTelegramErrors = {
+    /**
+     * Bad Request
+     */
+    400: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the event, useful for reporting
+         */
+        fingerprint?: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+    };
+    /**
+     * Unauthorized
+     */
+    401: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the event, useful for reporting
+         */
+        fingerprint?: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+    };
+    /**
+     * Not Found
+     */
+    404: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+    };
+    /**
+     * Unsupported Media Type
+     */
+    415: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the event, useful for reporting
+         */
+        fingerprint?: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+    };
+    /**
+     * Internal Server Error
+     */
+    500: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the event, useful for reporting
+         */
+        fingerprint?: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+        /**
+         * The inner exception
+         */
+        inner_exception?: {
+            name: string;
+            message: string;
+            cause?: string;
+            stack?: string;
+        };
+    };
+};
+
+export type PostV1ReplicasByReplicaUuidIntegrationsTelegramError = PostV1ReplicasByReplicaUuidIntegrationsTelegramErrors[keyof PostV1ReplicasByReplicaUuidIntegrationsTelegramErrors];
+
+export type PostV1ReplicasByReplicaUuidIntegrationsTelegramResponses = {
+    /**
+     * Telegram integration created successfully
+     */
+    200: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        id: number;
+    };
+    /**
+     * Telegram integration created successfully, but failed to notify the external integration server. If you are using the default Sensay Telegram Integration, we will retry starting the bot asynchronously.
+     */
+    202: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        id: number;
+        /**
+         * The reason why the operation is accepted instead of returning an immediate success.
+         */
+        message: string;
+    };
+};
+
+export type PostV1ReplicasByReplicaUuidIntegrationsTelegramResponse = PostV1ReplicasByReplicaUuidIntegrationsTelegramResponses[keyof PostV1ReplicasByReplicaUuidIntegrationsTelegramResponses];
+
 export type DeleteV1ReplicasByReplicaUuidData = {
     body?: never;
     headers?: {
@@ -4412,6 +4898,721 @@ export type PutV1ReplicasByReplicaUuidResponses = {
 
 export type PutV1ReplicasByReplicaUuidResponse = PutV1ReplicasByReplicaUuidResponses[keyof PutV1ReplicasByReplicaUuidResponses];
 
+export type GetV1DebugInfoData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/debug/info';
+};
+
+export type GetV1DebugInfoErrors = {
+    /**
+     * Bad Request
+     */
+    400: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the event, useful for reporting
+         */
+        fingerprint?: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+    };
+    /**
+     * Unauthorized
+     */
+    401: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the event, useful for reporting
+         */
+        fingerprint?: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+    };
+    /**
+     * Not Found
+     */
+    404: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+    };
+    /**
+     * Unsupported Media Type
+     */
+    415: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the event, useful for reporting
+         */
+        fingerprint?: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+    };
+    /**
+     * Internal Server Error
+     */
+    500: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the event, useful for reporting
+         */
+        fingerprint?: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+        /**
+         * The inner exception
+         */
+        inner_exception?: {
+            name: string;
+            message: string;
+            cause?: string;
+            stack?: string;
+        };
+    };
+};
+
+export type GetV1DebugInfoError = GetV1DebugInfoErrors[keyof GetV1DebugInfoErrors];
+
+export type GetV1DebugInfoResponses = {
+    /**
+     * Information about the server
+     */
+    200: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * The type of response
+         */
+        type: string;
+        /**
+         * The name of the environment
+         */
+        environment: string;
+        /**
+         * The Vercel deployment ID
+         */
+        deploymentId?: string;
+        /**
+         * The API version as specified in the version header
+         */
+        apiVersion?: string;
+        /**
+         * Whether Sentry connection string is specified
+         */
+        sentry: boolean;
+        /**
+         * The Sentry traces sample rate
+         */
+        sentry_samplerate?: number;
+        /**
+         * The authentication context for the current session
+         */
+        auth: {
+            [key: string]: unknown;
+        };
+    };
+};
+
+export type GetV1DebugInfoResponse = GetV1DebugInfoResponses[keyof GetV1DebugInfoResponses];
+
+export type GetV1DebugExceptionData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/debug/exception';
+};
+
+export type GetV1DebugExceptionErrors = {
+    /**
+     * A simulated internal server error
+     */
+    500: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the event, useful for reporting
+         */
+        fingerprint?: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+    };
+};
+
+export type GetV1DebugExceptionError = GetV1DebugExceptionErrors[keyof GetV1DebugExceptionErrors];
+
+export type GetV1DebugValidationParamByUuidData = {
+    body?: never;
+    path?: {
+        /**
+         * Test UUID parameter
+         */
+        UUID?: string | null;
+    };
+    query?: never;
+    url: '/v1/debug/validation/param/{UUID}';
+};
+
+export type GetV1DebugValidationParamByUuidErrors = {
+    /**
+     * Bad Request
+     */
+    400: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the event, useful for reporting
+         */
+        fingerprint?: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+    };
+    /**
+     * Unauthorized
+     */
+    401: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the event, useful for reporting
+         */
+        fingerprint?: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+    };
+    /**
+     * Not Found
+     */
+    404: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+    };
+    /**
+     * Unsupported Media Type
+     */
+    415: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the event, useful for reporting
+         */
+        fingerprint?: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+    };
+    /**
+     * Internal Server Error
+     */
+    500: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the event, useful for reporting
+         */
+        fingerprint?: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+        /**
+         * The inner exception
+         */
+        inner_exception?: {
+            name: string;
+            message: string;
+            cause?: string;
+            stack?: string;
+        };
+    };
+};
+
+export type GetV1DebugValidationParamByUuidError = GetV1DebugValidationParamByUuidErrors[keyof GetV1DebugValidationParamByUuidErrors];
+
+export type GetV1DebugValidationParamByUuidResponses = {
+    /**
+     * Test response
+     */
+    200: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        type: string;
+    };
+};
+
+export type GetV1DebugValidationParamByUuidResponse = GetV1DebugValidationParamByUuidResponses[keyof GetV1DebugValidationParamByUuidResponses];
+
+export type GetV1DebugValidationQueryData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Test UUID parameter
+         */
+        UUID?: string | null;
+    };
+    url: '/v1/debug/validation/query';
+};
+
+export type GetV1DebugValidationQueryErrors = {
+    /**
+     * Bad Request
+     */
+    400: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the event, useful for reporting
+         */
+        fingerprint?: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+    };
+    /**
+     * Unauthorized
+     */
+    401: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the event, useful for reporting
+         */
+        fingerprint?: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+    };
+    /**
+     * Not Found
+     */
+    404: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+    };
+    /**
+     * Unsupported Media Type
+     */
+    415: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the event, useful for reporting
+         */
+        fingerprint?: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+    };
+    /**
+     * Internal Server Error
+     */
+    500: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the event, useful for reporting
+         */
+        fingerprint?: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+        /**
+         * The inner exception
+         */
+        inner_exception?: {
+            name: string;
+            message: string;
+            cause?: string;
+            stack?: string;
+        };
+    };
+};
+
+export type GetV1DebugValidationQueryError = GetV1DebugValidationQueryErrors[keyof GetV1DebugValidationQueryErrors];
+
+export type GetV1DebugValidationQueryResponses = {
+    /**
+     * Test response
+     */
+    200: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        type: string;
+    };
+};
+
+export type GetV1DebugValidationQueryResponse = GetV1DebugValidationQueryResponses[keyof GetV1DebugValidationQueryResponses];
+
+export type PostV1DebugValidationJsonData = {
+    body?: {
+        /**
+         * Test UUID parameter
+         */
+        UUID: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/v1/debug/validation/json';
+};
+
+export type PostV1DebugValidationJsonErrors = {
+    /**
+     * Bad Request
+     */
+    400: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the event, useful for reporting
+         */
+        fingerprint?: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+    };
+    /**
+     * Unauthorized
+     */
+    401: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the event, useful for reporting
+         */
+        fingerprint?: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+    };
+    /**
+     * Not Found
+     */
+    404: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+    };
+    /**
+     * Unsupported Media Type
+     */
+    415: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the event, useful for reporting
+         */
+        fingerprint?: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+    };
+    /**
+     * Internal Server Error
+     */
+    500: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the event, useful for reporting
+         */
+        fingerprint?: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+        /**
+         * The inner exception
+         */
+        inner_exception?: {
+            name: string;
+            message: string;
+            cause?: string;
+            stack?: string;
+        };
+    };
+};
+
+export type PostV1DebugValidationJsonError = PostV1DebugValidationJsonErrors[keyof PostV1DebugValidationJsonErrors];
+
+export type PostV1DebugValidationJsonResponses = {
+    /**
+     * Test response
+     */
+    200: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        type: string;
+    };
+};
+
+export type PostV1DebugValidationJsonResponse = PostV1DebugValidationJsonResponses[keyof PostV1DebugValidationJsonResponses];
+
+export type GetV1DebugFetchExceptionData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/debug/fetch-exception';
+};
+
+export type GetV1DebugFetchExceptionErrors = {
+    /**
+     * A simulated fetch error
+     */
+    500: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the event, useful for reporting
+         */
+        fingerprint?: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+    };
+};
+
+export type GetV1DebugFetchExceptionError = GetV1DebugFetchExceptionErrors[keyof GetV1DebugFetchExceptionErrors];
+
+export type GetV1DebugApiErrorData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/debug/api-error';
+};
+
+export type GetV1DebugApiErrorErrors = {
+    /**
+     * A simulated API error
+     */
+    501: {
+        /**
+         * Indicates the status of the request
+         */
+        success: boolean;
+        /**
+         * A text representation of the error
+         */
+        error: string;
+        /**
+         * A unique identifier of the event, useful for reporting
+         */
+        fingerprint?: string;
+        /**
+         * A unique identifier of the request, useful for reporting
+         */
+        request_id: string;
+    };
+};
+
+export type GetV1DebugApiErrorError = GetV1DebugApiErrorErrors[keyof GetV1DebugApiErrorErrors];
+
+export type PostV1DebugIngestFileData = {
+    body?: {
+        replica_uuid: string;
+        id: string;
+        name: string;
+        path: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/v1/debug/ingest-file';
+};
+
+export type PostV1DebugIngestFileResponses = {
+    /**
+     * Message sent successfully
+     */
+    200: {
+        success: boolean;
+        message: string;
+    };
+};
+
+export type PostV1DebugIngestFileResponse = PostV1DebugIngestFileResponses[keyof PostV1DebugIngestFileResponses];
+
 export type ClientOptions = {
-    baseUrl: 'https://api.sensay.io' | (string & {});
+    baseUrl: 'http://localhost:3000' | (string & {});
 };

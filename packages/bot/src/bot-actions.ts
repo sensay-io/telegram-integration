@@ -69,6 +69,66 @@ export const botActions = ({
   ownerID,
   elevenlabsId,
 }: HandleTelegramBotArgs) => {
+  bot.on('message:photo', async (ctx) => {
+    const parsedMessage = parse(ctx.message)
+
+    if (!parsedMessage || parsedMessage.isBot) return
+
+    const caption = ctx.message.caption
+    const isPrivateChat = parsedMessage.type === 'private'
+    const isBotMentioned = caption?.includes(`@${botUsername}`)
+    const isTopicMessage = ctx.message.is_topic_message
+
+    const needsReply = hasUserRepliedToReplica(parsedMessage.reply, botUsername)
+
+    if (!isBotMentioned && !needsReply && !isPrivateChat) return
+
+    ctx.chatAction = 'typing'
+
+    const messageThreadId = ctx?.message?.message_thread_id
+    const replyParameters = getReplyParameters('private', {
+      needsReply,
+      messageId: parsedMessage.messageId,
+      messageThreadId,
+      isTopicMessage,
+      chatId: parsedMessage.chatId,
+    })
+
+    try {
+      if (!caption) {
+        await sendError({
+          message: 'Caption is empty, please provide a message.',
+          ctx,
+          disableErrorCapture: true,
+        })
+        return
+      }
+
+      const imageURL = (await ctx.getFile()).getUrl()
+
+      const messageText = removeMentionIfNeeded(caption, botUsername, needsReply)
+
+      await sendMessage({
+        parsedMessage,
+        needsReply,
+        messageText,
+        replicaUuid,
+        messageThreadId,
+        botUsername: isPrivateChat ? '' : botUsername,
+        ctx,
+        replyParameters,
+        isTopicMessage,
+        imageURL,
+      })
+    } catch (error) {
+      await sendError({
+        message: 'An error occurred, please contact Sensay with the error id.',
+        ctx,
+        error,
+      })
+    }
+  })
+
   bot.on('message::mention', async (ctx, next) => {
     try {
       const parsedMessage = parse(ctx.message)

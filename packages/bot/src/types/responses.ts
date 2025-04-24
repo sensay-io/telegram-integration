@@ -16,6 +16,7 @@ export type SendMessageArgs = {
   replyParameters: ReplyParameterType<Methods<RawApi>>
   isTopicMessage?: boolean
   usage?: LanguageModelUsage | undefined
+  imageURL?: string
 }
 
 export type SendErrorArgs = {

@@ -18,6 +18,7 @@ export async function sendMessage({
   botUsername,
   ctx,
   replyParameters,
+  imageURL,
 }: SendMessageArgs) {
   const completionResponse = await postV1ReplicasByReplicaUuidChatCompletionsTelegram({
     path: { replicaUUID: replicaUuid },
@@ -27,6 +28,7 @@ export async function sendMessage({
     },
     body: {
       content: messageText,
+      imageURL,
       skip_chat_history: false,
       telegram_data: {
         chat_type: parsedMessage.type,
