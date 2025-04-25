@@ -142,15 +142,18 @@ export function parse(message: Message & Update.NonChannel): ParsedTelegramChat 
   const isTopicMessage = message.is_topic_message
 
   if (!messageText) {
-    throw new ParseError('No message was provided')
+    config.logger.warn(message, 'Failed to process message: No text or caption provided.')
+    return
   }
 
   if (!chatId) {
-    throw new ParseError('Failed to process message: Unable to identify chat.')
+    config.logger.warn(message, 'Failed to process message: Unable to identify chat.')
+    return
   }
 
   if (!messageId) {
-    throw new ParseError('Failed to process message: Unable to identify message id.')
+    config.logger.warn(message, 'Failed to process message: Unable to identify message id.')
+    return
   }
 
   const reply = message.reply_to_message
