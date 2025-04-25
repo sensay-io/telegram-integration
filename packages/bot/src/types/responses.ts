@@ -20,11 +20,10 @@ export type SendMessageArgs = {
 }
 
 export type SendErrorArgs = {
-  message: string
   ctx: FileFlavor<Context & AutoChatActionFlavor>
   error?: unknown
-  disableErrorCapture?: boolean
-  extraErrorInformation?: { [key: string]: string }
+  message?: string
+  extraErrorInformation?: Record<string, string | undefined>
 }
 
 export type SendVoiceRecordingArgs = {

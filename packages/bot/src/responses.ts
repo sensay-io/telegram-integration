@@ -1,8 +1,8 @@
 import { postV1ReplicasByReplicaUuidChatCompletionsTelegram } from '@sensay/telegram-shared'
+import SensayApiError from '@sensay/telegram-shared/src/api-client/runtime-config'
 import { ElevenLabsClient } from 'elevenlabs'
 import { InputFile } from 'grammy'
 import removeMd from 'remove-markdown'
-import { NonCriticalError } from './bot-actions'
 import { config } from './config'
 import { ctxReply } from './helpers'
 import { getReplyParameters } from './helpers'
@@ -42,11 +42,8 @@ export async function sendMessage({
   })
 
   let fullResponse = completionResponse.data?.content
-
   if (!fullResponse) {
-    throw new NonCriticalError(
-      'An error occurred while generating your response, please contact Sensay with the error id.',
-    )
+    throw SensayApiError.fromResponse(completionResponse.response)
   }
 
   const mentionName = `@${parsedMessage.username}`
@@ -56,8 +53,6 @@ export async function sendMessage({
     await ctxReply(fullResponse, ctx, replyParameters)
   } catch (err) {
     await sendError({
-      message:
-        'An error occurred with sending your message, please contact Sensay with the error id.',
       ctx,
       error: err,
       extraErrorInformation: {
@@ -67,27 +62,20 @@ export async function sendMessage({
       },
     })
   }
-
-  return
 }
 
-export const sendError = async ({
-  message,
-  ctx,
-  error,
-  disableErrorCapture,
-  extraErrorInformation,
-}: SendErrorArgs) => {
+export const sendError = async ({ ctx, error, message, extraErrorInformation }: SendErrorArgs) => {
+  let errorMessage = message ?? 'Sorry, I am experiencing difficulties at the moment'
+  if (error) {
+    const sentryErrorID = captureException(error as Error, { extra: { extraErrorInformation } })
+    errorMessage += ` (Error ID: ${sentryErrorID})`
+  }
+
   try {
     if (!ctx.message) {
-      await ctxReply(
-        `An unexpected error occurred, please contact Sensay with the error id. ${captureException(new Error(message), { extra: { extraErrorInformation } })}`,
-        ctx,
-      )
+      await ctxReply(errorMessage, ctx)
       return
     }
-
-    let messageResponse = message
 
     const replyObject = getReplyParameters('private', {
       needsReply: true,
@@ -97,18 +85,9 @@ export const sendError = async ({
       chatId: ctx.message.chat.id,
     })
 
-    if (disableErrorCapture) {
-      await ctxReply(messageResponse, ctx, replyObject)
-      return
-    }
-
-    messageResponse = `${message} Error Id :${captureException(new Error(String(error) || message), { extra: { extraErrorInformation } })}`
-    await ctxReply(messageResponse, ctx, replyObject)
+    await ctxReply(errorMessage, ctx, replyObject)
   } catch (err) {
-    await ctxReply(
-      `An unexpected error occurred, please contact Sensay with the error id. ${captureException(new Error(JSON.stringify(err)), { extra: { extraErrorInformation } })}`,
-      ctx,
-    )
+    await ctxReply(errorMessage, ctx)
   }
 }
 
@@ -126,7 +105,13 @@ export async function sendVoiceRecording({
   replyParameters,
 }: SendVoiceRecordingArgs) {
   if (!elevenlabsId) {
-    throw new NonCriticalError('Please provide a valid Elevenlabs ID')
+    await sendError({
+      ctx,
+      // User might not be the owner of the bot and woudln't know what is Elevenlabs and where to set it.
+      // Let's capture the error in Sentry and send the default error message.
+      error: new Error(`Elevenlabs ID is not set for replica ${replicaUuid}`),
+    })
+    return
   }
 
   const completionResponse = await postV1ReplicasByReplicaUuidChatCompletionsTelegram({
@@ -150,11 +135,8 @@ export async function sendVoiceRecording({
   })
 
   const text = completionResponse.data?.content
-
   if (!text) {
-    throw new NonCriticalError(
-      'An error occurred while generating your response, please contact Sensay with the error id.',
-    )
+    throw SensayApiError.fromResponse(completionResponse.response)
   }
 
   const textWithoutMarkdown = removeMd(
