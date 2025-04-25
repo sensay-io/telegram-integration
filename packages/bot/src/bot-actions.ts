@@ -146,6 +146,8 @@ export const botActions = ({
       return
     }
 
+    ctx.chatAction = 'typing'
+
     const { voice_requested, text } = await voiceRequest(messageText)
 
     if (voice_requested) {

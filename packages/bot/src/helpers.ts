@@ -87,7 +87,7 @@ export async function ctxReply(
   ctx: FileFlavor<Context & AutoChatActionFlavor>,
   replyParameters?: ReplyParameterType<'sendMessage', 'text' | 'chat_id'>,
 ) {
-  return await ctx.reply(removeMd(message), replyParameters)
+  return await ctx.reply(escapeMarkdown(message), replyParameters)
 }
 
 export async function voiceRequest(input: string) {
@@ -225,13 +225,14 @@ export function escapeMarkdown(text: string): string {
     '.',
     '!',
   ]
-
   // First escape underscores
-  const escapedText = text.replace(/_/g, '\\_')
+  // biome-ignore lint: i need backticks to use \ without prettier deleting it
+  const escapedText = text.replace(/_/g, `\\_`)
 
   // Then escape all other special characters
   return specialChars.reduce((escapedText, char) => {
-    const regex = new RegExp(`\\${char}`, 'g')
+    // biome-ignore lint: i need backticks to use \ without prettier deleting it
+    const regex = new RegExp(`\${char}`, 'g')
     return escapedText.replace(regex, `\\${char}`)
   }, escapedText)
 }

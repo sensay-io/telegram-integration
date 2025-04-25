@@ -45,6 +45,19 @@ export class BotClient {
     await this.bot.init()
 
     this.bot.on('message', async (ctx, next) => {
+      this.logger.trace(
+        {
+          messageId: ctx.message.message_id,
+          chatId: ctx.message.chat.id,
+          messageThreadId: ctx.message.message_thread_id,
+          type: ctx.message.chat.type,
+          isBot: ctx.message.from.is_bot,
+          userId: ctx.message.from.id,
+          username: ctx.message.from.username,
+        },
+        'Processing message',
+      )
+
       const parsedMessage = parse(ctx.message)
       if (!parsedMessage) return
       const {
@@ -58,19 +71,6 @@ export class BotClient {
         username,
         reply,
       } = parsedMessage
-
-      this.logger.trace(
-        {
-          messageId,
-          chatId,
-          messageThreadId,
-          type,
-          isBot,
-          userId,
-          username,
-        },
-        'Processing message',
-      )
 
       if (isBot) return
 
