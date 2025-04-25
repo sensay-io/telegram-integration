@@ -9,11 +9,18 @@ import { createOpenAI } from '@ai-sdk/openai'
 import { generateObject } from 'ai'
 import { codeBlock } from 'common-tags'
 import removeMd from 'remove-markdown'
-import { object, z } from 'zod'
-import { NonCriticalError } from './bot-actions'
+import { z } from 'zod'
 import { config } from './config'
 
 // TODO: API-589 Refactor this file. Move functions to domain-specific files.
+
+export class ParseError extends Error {
+  constructor(message: string) {
+    super(message)
+    Object.setPrototypeOf(this, ParseError.prototype)
+    this.name = 'ParseError'
+  }
+}
 
 export function removeMentionIfNeeded(text: string, mention: string, reply?: boolean) {
   const mentionWithSymbol = `@${mention}`
@@ -41,11 +48,6 @@ export function isPlanValid(overridePlan: boolean, userId: string) {
 
   const isAllowed = true
 
-  if (!isAllowed) {
-    throw new NonCriticalError(
-      'Please renew your subscription. https://www.sensay.io/pricing to visit Sensay pricing.',
-    )
-  }
   return isAllowed
 }
 
@@ -140,15 +142,15 @@ export function parse(message: Message & Update.NonChannel): ParsedTelegramChat 
   const isTopicMessage = message.is_topic_message
 
   if (!messageText) {
-    throw new NonCriticalError('No message was provided')
+    throw new ParseError('No message was provided')
   }
 
   if (!chatId) {
-    throw new NonCriticalError('Failed to process message: Unable to identify chat.')
+    throw new ParseError('Failed to process message: Unable to identify chat.')
   }
 
   if (!messageId) {
-    throw new NonCriticalError('Failed to process message: Unable to identify message id.')
+    throw new ParseError('Failed to process message: Unable to identify message id.')
   }
 
   const reply = message.reply_to_message
@@ -196,8 +198,8 @@ export type ParsedTelegramChat = {
   }
 }
 
-export const captureException = (error: Error, extra?: Record<string, unknown>) => {
-  return config.logger.error(error)
+export const captureException = (error: Error, ...extra: unknown[]) => {
+  return config.logger.error(error, undefined, ...extra)
 }
 
 export function escapeMarkdown(text: string): string {

@@ -7,8 +7,9 @@ import {
   postV1ReplicasByReplicaUuidChatHistoryTelegram,
   postV1Users,
 } from '@sensay/telegram-shared'
+import SensayApiError from '@sensay/telegram-shared/src/api-client/runtime-config'
 import type { Api, Bot, Context, RawApi } from 'grammy'
-import { NonCriticalError, botActions } from './bot-actions'
+import { botActions } from './bot-actions'
 import { initTelegramBot } from './bot-actions'
 import { PRIVATE_CHAT } from './constants'
 import { hasUserRepliedToReplica } from './helpers'
@@ -123,15 +124,12 @@ export class BotClient {
     // https://github.com/grammyjs/grammY/issues/503
     this.bot.catch(async (error) => {
       await sendError({
-        message:
-          error instanceof NonCriticalError
-            ? error.message
-            : error instanceof Error
-              ? error.message
-              : 'An error occurred, please contact Sensay with the error id.',
-        ctx: error.ctx,
         error,
-        disableErrorCapture: error instanceof NonCriticalError,
+        ctx: error.ctx,
+        extraErrorInformation: {
+          replicaUuid: this.replicaUuid,
+          userMessage: error.ctx.message?.text,
+        },
       })
     })
 
@@ -170,9 +168,7 @@ async function createUserIfNotExist(userId: string) {
   }
 
   // For other error statuses, throw an error
-  throw new Error(`Unexpected error in getUserResponse for userId: ${userId}`, {
-    cause: getUserResponse,
-  })
+  throw SensayApiError.fromResponse(getUserResponse.response)
 }
 
 async function createUser(userId: string) {
@@ -190,18 +186,8 @@ async function createUser(userId: string) {
   })
 
   if (!createUserResponse.response.ok) {
-    throw new Error(`Unexpected error in createUserResponse for userId: ${userId}`, {
-      cause: createUserResponse,
-    })
+    throw SensayApiError.fromResponse(createUserResponse.response)
   }
 
   return createUserResponse.data
-}
-
-function logUnexpectedResponse(response: Response, action: string) {
-  // TODO: Move to Common
-  // TODO: Use Sentry/Pino here
-  console.error(`Unexpected response when ${action}: ${response.status} ${response.statusText}`)
-  console.error('Headers:', Object.fromEntries(response.headers))
-  console.error('Body:', response.body)
 }

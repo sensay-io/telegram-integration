@@ -20,14 +20,6 @@ import {
 import { sendError, sendMessage } from './responses.js'
 import { sendVoiceRecording } from './responses.js'
 
-export class NonCriticalError extends Error {
-  constructor(message: string) {
-    super(message)
-    Object.setPrototypeOf(this, NonCriticalError.prototype)
-    this.name = 'NonCriticalError'
-  }
-}
-
 export function initTelegramBot(token: string) {
   const bot = new Bot<FileFlavor<Context & AutoChatActionFlavor>>(token)
 
@@ -94,200 +86,164 @@ export const botActions = ({
       chatId: parsedMessage.chatId,
     })
 
-    try {
-      if (!caption) {
-        await sendError({
-          message: 'Caption is empty, please provide a message.',
-          ctx,
-          disableErrorCapture: true,
-        })
-        return
-      }
-
-      const imageURL = (await ctx.getFile()).getUrl()
-
-      const messageText = removeMentionIfNeeded(caption, botUsername, needsReply)
-
-      await sendMessage({
-        parsedMessage,
-        needsReply,
-        messageText,
-        replicaUuid,
-        messageThreadId,
-        botUsername: isPrivateChat ? '' : botUsername,
-        ctx,
-        replyParameters,
-        isTopicMessage,
-        imageURL,
-      })
-    } catch (error) {
+    if (!caption) {
       await sendError({
-        message: 'An error occurred, please contact Sensay with the error id.',
         ctx,
-        error,
+        message: 'Caption is empty, please provide a message.',
       })
+      return
     }
+
+    const imageURL = (await ctx.getFile()).getUrl()
+
+    const messageText = removeMentionIfNeeded(caption, botUsername, needsReply)
+
+    await sendMessage({
+      parsedMessage,
+      needsReply,
+      messageText,
+      replicaUuid,
+      messageThreadId,
+      botUsername: isPrivateChat ? '' : botUsername,
+      ctx,
+      replyParameters,
+      isTopicMessage,
+      imageURL,
+    })
   })
 
   bot.on('message::mention', async (ctx, next) => {
-    try {
-      const parsedMessage = parse(ctx.message)
+    const parsedMessage = parse(ctx.message)
 
-      if (!parsedMessage) return
-      const {
-        messageText,
-        messageId,
-        chatId,
-        messageThreadId,
-        isTopicMessage,
-        isBot,
-        type,
-        reply,
-      } = parsedMessage
+    if (!parsedMessage) return
+    const { messageText, messageId, chatId, messageThreadId, isTopicMessage, isBot, type, reply } =
+      parsedMessage
 
-      const needsReply = hasUserRepliedToReplica(reply, botUsername)
+    const needsReply = hasUserRepliedToReplica(reply, botUsername)
 
-      if (type === PRIVATE_CHAT) {
-        // Private messages are handled in the on('message') event
-        await next()
-      }
+    if (type === PRIVATE_CHAT) {
+      // Private messages are handled in the on('message') event
+      await next()
+    }
 
-      if (isBot) return
+    if (isBot) return
 
-      const replyParameters = getReplyParameters('group', {
-        needsReply,
-        messageId,
-        messageThreadId,
-        chatId,
-        isTopicMessage,
-      })
+    const replyParameters = getReplyParameters('group', {
+      needsReply,
+      messageId,
+      messageThreadId,
+      chatId,
+      isTopicMessage,
+    })
 
-      const userMessage = removeMentionIfNeeded(messageText, botUsername, needsReply)
+    const userMessage = removeMentionIfNeeded(messageText, botUsername, needsReply)
 
-      if (!userMessage) {
-        throw new NonCriticalError('No message was provided')
-      }
-
-      const { voice_requested, text } = await voiceRequest(messageText)
-
-      if (voice_requested) {
-        await sendVoiceRecording({
-          ctx,
-          parsedMessage,
-          messageText: text,
-          replicaUuid,
-          elevenlabsId,
-          needsReply,
-          messageThreadId,
-          isTopicMessage,
-          replyParameters,
-        })
-        return
-      }
-
-      await sendMessage({
-        parsedMessage,
-        needsReply,
-        messageText: userMessage,
-        replicaUuid,
-        messageThreadId,
-        botUsername: botUsername,
+    if (!userMessage) {
+      await sendError({
         ctx,
-        replyParameters,
-        isTopicMessage,
+        message: 'No message was provided',
       })
       return
-    } catch (err) {
-      await sendError({
-        message:
-          err instanceof NonCriticalError
-            ? err.message
-            : err instanceof Error
-              ? err.message
-              : 'An error occurred, please contact Sensay with the error id.',
-        ctx,
-        error: err,
-        disableErrorCapture: err instanceof NonCriticalError,
-      })
     }
+
+    const { voice_requested, text } = await voiceRequest(messageText)
+
+    if (voice_requested) {
+      await sendVoiceRecording({
+        ctx,
+        parsedMessage,
+        messageText: text,
+        replicaUuid,
+        elevenlabsId,
+        needsReply,
+        messageThreadId,
+        isTopicMessage,
+        replyParameters,
+      })
+      return
+    }
+
+    await sendMessage({
+      parsedMessage,
+      needsReply,
+      messageText: userMessage,
+      replicaUuid,
+      messageThreadId,
+      botUsername: botUsername,
+      ctx,
+      replyParameters,
+      isTopicMessage,
+    })
   })
 
   bot.on('message', async (ctx) => {
-    try {
-      const parsedMessage = parse(ctx.message)
-      if (!parsedMessage) return
+    const parsedMessage = parse(ctx.message)
+    if (!parsedMessage) return
 
-      const { messageText, messageId, chatId, messageThreadId, isTopicMessage, type, reply } =
-        parsedMessage
-      const isPrivateChat = type === 'private'
+    const { messageText, messageId, chatId, messageThreadId, isTopicMessage, type, reply } =
+      parsedMessage
+    const isPrivateChat = type === 'private'
 
-      const needsReply = hasUserRepliedToReplica(reply, botUsername)
-      if (!messageText.includes(`@${botUsername}`) && !needsReply && !isPrivateChat) return
+    const needsReply = hasUserRepliedToReplica(reply, botUsername)
+    if (!messageText.includes(`@${botUsername}`) && !needsReply && !isPrivateChat) return
 
-      ctx.chatAction = 'typing'
+    ctx.chatAction = 'typing'
 
-      isPlanValid(overridePlan, ownerID)
-
-      const { voice_requested, text } = await voiceRequest(messageText)
-
-      const chatType = isPrivateChat ? 'private' : 'group'
-      const replyParameters = getReplyParameters(chatType, {
-        needsReply,
-        messageId: messageId,
-        messageThreadId,
-        chatId: chatId,
-        isTopicMessage,
-      })
-
-      if (voice_requested) {
-        await sendVoiceRecording({
-          ctx: ctx,
-          parsedMessage,
-          messageText: text,
-          replicaUuid,
-          elevenlabsId,
-          needsReply,
-          messageThreadId,
-          isTopicMessage,
-          replyParameters,
-        })
-        return
-      }
-
-      let userMessage = messageText
-
-      userMessage = removeMentionIfNeeded(messageText, botUsername, needsReply)
-
-      if (!userMessage) {
-        throw new NonCriticalError('No message was provided')
-      }
-
-      await sendMessage({
-        parsedMessage,
-        needsReply,
-        messageText: userMessage,
-        replicaUuid,
-        messageThreadId,
-        botUsername: isPrivateChat ? '' : botUsername,
-        ctx,
-        replyParameters,
-        isTopicMessage,
-      })
-
-      return
-    } catch (err) {
+    if (!isPlanValid(overridePlan, ownerID)) {
       await sendError({
-        message:
-          err instanceof NonCriticalError
-            ? err.message
-            : err instanceof Error
-              ? err.message
-              : 'An error occurred, please contact Sensay with the error id.',
         ctx,
-        error: err,
-        disableErrorCapture: err instanceof NonCriticalError,
+        message:
+          'Please renew your subscription. https://www.sensay.io/pricing to visit Sensay pricing.',
       })
+      return
     }
+
+    const { voice_requested, text } = await voiceRequest(messageText)
+
+    const chatType = isPrivateChat ? 'private' : 'group'
+    const replyParameters = getReplyParameters(chatType, {
+      needsReply,
+      messageId: messageId,
+      messageThreadId,
+      chatId: chatId,
+      isTopicMessage,
+    })
+
+    if (voice_requested) {
+      await sendVoiceRecording({
+        ctx: ctx,
+        parsedMessage,
+        messageText: text,
+        replicaUuid,
+        elevenlabsId,
+        needsReply,
+        messageThreadId,
+        isTopicMessage,
+        replyParameters,
+      })
+      return
+    }
+
+    const userMessage = removeMentionIfNeeded(messageText, botUsername, needsReply)
+    if (!userMessage) {
+      await sendError({
+        ctx,
+        message: 'No message was provided',
+      })
+      return
+    }
+
+    await sendMessage({
+      parsedMessage,
+      needsReply,
+      messageText: userMessage,
+      replicaUuid,
+      messageThreadId,
+      botUsername: isPrivateChat ? '' : botUsername,
+      ctx,
+      replyParameters,
+      isTopicMessage,
+    })
   })
 
   return bot

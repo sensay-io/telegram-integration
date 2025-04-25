@@ -3,9 +3,11 @@ import { BotClient } from './bot'
 import { config } from './config'
 
 const bot = new BotClient(
+  config.logger,
   config.BOT_TOKEN.getSensitiveValue(),
   config.REPLICA_UUID,
   config.OWNER_ID,
+  config.ELEVENLABS_ID,
 )
 
 const stopBot = () => {
