@@ -24,7 +24,7 @@ const logger = config.logger.child({
   module: path.basename(import.meta.filename),
   replicaUUID: config.REPLICA_UUID,
   replicaSlug: config.REPLICA_SLUG,
-  ownerID: config.OWNER_ID,
+  ownerUUID: config.OWNER_UUID,
   elevenLabsID: config.ELEVENLABS_ID,
   PID: process.pid,
 })
@@ -38,7 +38,7 @@ const botDefinition = {
   token: config.BOT_TOKEN,
   replicaUUID: config.REPLICA_UUID,
   replicaSlug: config.REPLICA_SLUG,
-  ownerID: config.OWNER_ID,
+  ownerUUID: config.OWNER_UUID,
   elevenLabsID: config.ELEVENLABS_ID,
 } satisfies BotDefinition
 
@@ -46,7 +46,7 @@ const botClient = new BotClient(
   logger,
   botDefinition.token.getSensitiveValue(),
   botDefinition.replicaUUID,
-  botDefinition.ownerID,
+  botDefinition.ownerUUID,
   botDefinition.elevenLabsID,
 )
 

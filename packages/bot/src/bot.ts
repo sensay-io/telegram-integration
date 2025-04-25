@@ -28,7 +28,7 @@ export class BotClient {
     logger: Logger,
     botToken: string,
     private readonly replicaUuid: string,
-    private readonly ownerID: string,
+    private readonly ownerUUID?: string,
     private readonly elevenLabsId?: string,
   ) {
     this.bot = initTelegramBot(botToken)
@@ -114,7 +114,7 @@ export class BotClient {
       botUsername: this.bot.botInfo.username,
       replicaUuid: this.replicaUuid,
       overridePlan: false,
-      ownerID: this.ownerID,
+      ownerUUID: this.ownerUUID,
       elevenlabsId: this.elevenLabsId,
     })
 

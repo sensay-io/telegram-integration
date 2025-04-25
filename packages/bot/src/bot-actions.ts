@@ -49,7 +49,7 @@ export type HandleTelegramBotArgs = {
   botUsername: string
   replicaUuid: string
   overridePlan: boolean
-  ownerID: string
+  ownerUUID?: string
   elevenlabsId?: string
 }
 
@@ -58,7 +58,7 @@ export const botActions = ({
   botUsername,
   replicaUuid,
   overridePlan,
-  ownerID,
+  ownerUUID,
   elevenlabsId,
 }: HandleTelegramBotArgs) => {
   bot.on('message:photo', async (ctx) => {
@@ -189,7 +189,8 @@ export const botActions = ({
 
     ctx.chatAction = 'typing'
 
-    if (!isPlanValid(overridePlan, ownerID)) {
+    // TODO: Make ownerUUID not nullable when we implement subscription plan validation
+    if (ownerUUID && !isPlanValid(overridePlan, ownerUUID)) {
       await sendError({
         ctx,
         message:

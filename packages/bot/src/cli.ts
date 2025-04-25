@@ -6,7 +6,7 @@ const bot = new BotClient(
   config.logger,
   config.BOT_TOKEN.getSensitiveValue(),
   config.REPLICA_UUID,
-  config.OWNER_ID,
+  config.OWNER_UUID,
   config.ELEVENLABS_ID,
 )
 

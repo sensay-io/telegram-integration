@@ -13,7 +13,7 @@ const createFakeReplica = (id: number) => {
     uuid,
     name: `replica-${id}`,
     slug: `replica-${id}`,
-    ownerID: `owner-${id}`,
+    owner_uuid: `owner-${id}`,
     telegram_integration: {
       service_name: config.TELEGRAM_SERVICE_NAME,
       token: `token-${id}`,
