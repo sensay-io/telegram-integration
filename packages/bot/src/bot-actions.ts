@@ -124,6 +124,7 @@ export const botActions = ({
     if (type === PRIVATE_CHAT) {
       // Private messages are handled in the on('message') event
       await next()
+      return
     }
 
     if (isBot) return

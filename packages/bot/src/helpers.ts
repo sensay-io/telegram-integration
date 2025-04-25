@@ -8,7 +8,6 @@ import type { Methods } from 'grammy/out/core/client.js'
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateObject } from 'ai'
 import { codeBlock } from 'common-tags'
-import removeMd from 'remove-markdown'
 import { z } from 'zod'
 import { config } from './config'
 
