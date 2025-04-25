@@ -54,7 +54,7 @@ export class BotHost {
       BOT_TOKEN: botDefinition.token.getSensitiveValue(),
       REPLICA_UUID: botDefinition.replicaUUID,
       REPLICA_SLUG: botDefinition.replicaSlug,
-      OWNER_ID: botDefinition.ownerID,
+      OWNER_UUID: botDefinition.ownerUUID,
       ELEVENLABS_ID: botDefinition.elevenLabsID,
       NODE_ENV: clusterConfig.NODE_ENV,
       LOG_LEVEL: clusterConfig.LOG_LEVEL,

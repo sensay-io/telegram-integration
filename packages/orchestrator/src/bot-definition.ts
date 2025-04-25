@@ -12,7 +12,7 @@ export const ReplicaUUIDSchema =
 export const BotDefinitionSchema = z.object({
   replicaUUID: ReplicaUUIDSchema,
   replicaSlug: z.string(),
-  ownerID: z.string(),
+  ownerUUID: z.string().optional(),
   token: SensitiveStringSchema,
   elevenLabsID: z.string().optional(),
 })

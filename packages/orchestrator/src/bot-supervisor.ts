@@ -23,7 +23,7 @@ export enum BotStatus {
 export type BotStatusInfo = {
   replicaUUID: string
   replicaSlug?: string
-  ownerID: string
+  ownerUUID?: string
   elevenLabsID?: string
   status: BotStatus
   pid?: number
@@ -79,7 +79,7 @@ export class BotSupervisor {
     return {
       replicaUUID: this.botDefinition.replicaUUID,
       replicaSlug: this.botDefinition.replicaSlug,
-      ownerID: this.botDefinition.ownerID,
+      ownerUUID: this.botDefinition.ownerUUID,
       elevenLabsID: this.botDefinition.elevenLabsID,
       status: this.status,
       pid: this.botHost?.PID,

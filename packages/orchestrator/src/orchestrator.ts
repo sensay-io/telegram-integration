@@ -24,7 +24,7 @@ export enum BotCRUDOperationResult {
 type Replica = {
   uuid: string
   slug: string
-  ownerID: string
+  owner_uuid: string | null
   elevenLabsID?: string | null
   telegram_integration: {
     token: string | null
@@ -196,7 +196,7 @@ export class Orchestrator {
     if (
       newBotDefinition.replicaUUID === existingBotDefinition?.replicaUUID &&
       newBotDefinition.replicaSlug === existingBotDefinition?.replicaSlug &&
-      newBotDefinition.ownerID === existingBotDefinition?.ownerID &&
+      newBotDefinition.ownerUUID === existingBotDefinition?.ownerUUID &&
       newBotDefinition.token.getSensitiveValue() ===
         existingBotDefinition?.token.getSensitiveValue()
     ) {
@@ -305,9 +305,9 @@ export class Orchestrator {
     const botDefinition = {
       replicaUUID: replica.uuid,
       replicaSlug: replica.slug,
-      ownerID: replica.ownerID,
-      token: new SensitiveString(replica.telegram_integration?.token ?? ''),
+      ownerUUID: replica.owner_uuid ?? undefined,
       elevenLabsID: replica.elevenLabsID ?? undefined,
+      token: new SensitiveString(replica.telegram_integration?.token ?? ''),
     } satisfies BotDefinition
     return botDefinition
   }
