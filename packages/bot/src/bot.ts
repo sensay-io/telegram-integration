@@ -7,7 +7,7 @@ import {
   postV1ReplicasByReplicaUuidChatHistoryTelegram,
   postV1Users,
 } from '@sensay/telegram-shared'
-import SensayApiError from '@sensay/telegram-shared/src/api-client/runtime-config'
+import { SensayApiError } from '@sensay/telegram-shared'
 import type { Api, Bot, Context, RawApi } from 'grammy'
 import { botActions } from './bot-actions'
 import { initTelegramBot } from './bot-actions'

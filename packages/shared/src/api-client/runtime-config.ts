@@ -8,7 +8,7 @@ const VERCEL_PROTECTION_BYPASS_KEY = config.VERCEL_PROTECTION_BYPASS_KEY.getSens
 
 const SENSAY_API_VERSION = '2025-04-01'
 
-export default class SensayApiError extends Error {
+export class SensayApiError extends Error {
   constructor(
     readonly message: string,
     readonly statusCode: number,

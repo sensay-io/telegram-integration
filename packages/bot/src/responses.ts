@@ -1,5 +1,7 @@
-import { postV1ReplicasByReplicaUuidChatCompletionsTelegram } from '@sensay/telegram-shared'
-import SensayApiError from '@sensay/telegram-shared/src/api-client/runtime-config'
+import {
+  SensayApiError,
+  postV1ReplicasByReplicaUuidChatCompletionsTelegram,
+} from '@sensay/telegram-shared'
 import { ElevenLabsClient } from 'elevenlabs'
 import { InputFile } from 'grammy'
 import removeMd from 'remove-markdown'
