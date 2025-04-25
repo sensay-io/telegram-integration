@@ -256,9 +256,9 @@ export class Orchestrator {
       }
     }
 
-    const runningBotsDefinitions = this.botsSupervisors
-      .values()
-      .map((botSupervisor) => botSupervisor.botDefinition)
+    const runningBotsDefinitions = Array.from(this.botsSupervisors.values()).map(
+      (botSupervisor) => botSupervisor.botDefinition,
+    )
     for (const botDefinition of runningBotsDefinitions) {
       if (this.botsDefinitions.has(botDefinition.replicaUUID)) {
         continue
