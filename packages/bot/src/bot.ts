@@ -58,6 +58,9 @@ export class BotClient {
         'Processing message',
       )
 
+      // Ignore event from being added to a group
+      if (ctx.message.new_chat_members) return
+
       const parsedMessage = parse(ctx.message)
       if (!parsedMessage) return
       const {
