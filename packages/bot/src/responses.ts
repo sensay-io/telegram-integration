@@ -67,7 +67,7 @@ export async function sendMessage({
 }
 
 export const sendError = async ({ ctx, error, message, extraErrorInformation }: SendErrorArgs) => {
-  let errorMessage = message ?? 'Sorry, I am experiencing difficulties at the moment'
+  let errorMessage = message ?? 'Sorry, I am experiencing difficulties at the moment.'
   if (error) {
     const sentryErrorID = captureException(error as Error, { extra: { extraErrorInformation } })
     errorMessage += ` (Error ID: ${sentryErrorID})`
