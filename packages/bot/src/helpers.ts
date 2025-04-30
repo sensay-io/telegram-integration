@@ -75,7 +75,7 @@ const createSignedToken = () => {
   }
 
   if (!env.SENSAY_SECRET_KEY) {
-    throw new Error('WWW_SECRET_KEY is not set')
+    throw new Error('SENSAY_SECRET_KEY is not set')
   }
 
   const token = pkg.sign(payload, env.SENSAY_SECRET_KEY, {
