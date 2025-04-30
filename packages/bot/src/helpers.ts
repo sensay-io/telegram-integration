@@ -1,6 +1,5 @@
 import type { AutoChatActionFlavor } from '@grammyjs/auto-chat-action'
 import type { FileFlavor } from '@grammyjs/files'
-import type { Message, Update } from '@grammyjs/types'
 import type { Context, RawApi } from 'grammy'
 import type { Other as OtherApi } from 'grammy/out/core/api.js'
 import type { Methods } from 'grammy/out/core/client.js'
@@ -10,6 +9,7 @@ import { generateObject } from 'ai'
 import { codeBlock } from 'common-tags'
 import { z } from 'zod'
 import { config } from './config'
+import { sendError } from './responses'
 
 // TODO: API-589 Refactor this file. Move functions to domain-specific files.
 
@@ -133,7 +133,15 @@ Examples:
   return { voice_requested: voice, text }
 }
 
-export function parse(message: Message & Update.NonChannel): ParsedTelegramChat | undefined {
+export function parse(
+  ctx: FileFlavor<Context & AutoChatActionFlavor>,
+): ParsedTelegramChat | undefined {
+  const message = ctx.message
+  if (!message) {
+    config.logger.warn(ctx, 'Failed to process message: No message provided.')
+    return
+  }
+
   const messageText = message.text || message.caption
   const messageId = message.message_id
   const chatId = message.chat.id
@@ -141,17 +149,23 @@ export function parse(message: Message & Update.NonChannel): ParsedTelegramChat 
   const isTopicMessage = message.is_topic_message
 
   if (!messageText) {
-    config.logger.warn(message, 'Failed to process message: No text or caption provided.')
-    return
-  }
-
-  if (!chatId) {
-    config.logger.warn(message, 'Failed to process message: Unable to identify chat.')
+    const response = 'Failed to process message: No text or caption provided.'
+    config.logger.warn(message, response)
+    sendError({ ctx, message: response })
     return
   }
 
   if (!messageId) {
-    config.logger.warn(message, 'Failed to process message: Unable to identify message id.')
+    const response = 'Failed to process message: Unable to identify message id.'
+    config.logger.warn(message, response)
+    sendError({ ctx, message: response })
+    return
+  }
+
+  if (!chatId) {
+    const response = 'Failed to process message: Unable to identify chat.'
+    config.logger.warn(message, response)
+    sendError({ ctx, message: response })
     return
   }
 

@@ -62,7 +62,7 @@ export const botActions = ({
   elevenlabsId,
 }: HandleTelegramBotArgs) => {
   bot.on('message:photo', async (ctx) => {
-    const parsedMessage = parse(ctx.message)
+    const parsedMessage = parse(ctx)
 
     if (!parsedMessage || parsedMessage.isBot) return
 
@@ -113,7 +113,7 @@ export const botActions = ({
   })
 
   bot.on('message::mention', async (ctx, next) => {
-    const parsedMessage = parse(ctx.message)
+    const parsedMessage = parse(ctx)
 
     if (!parsedMessage) return
     const { messageText, messageId, chatId, messageThreadId, isTopicMessage, isBot, type, reply } =
@@ -180,7 +180,7 @@ export const botActions = ({
   })
 
   bot.on('message', async (ctx) => {
-    const parsedMessage = parse(ctx.message)
+    const parsedMessage = parse(ctx)
     if (!parsedMessage) return
 
     const { messageText, messageId, chatId, messageThreadId, isTopicMessage, type, reply } =
