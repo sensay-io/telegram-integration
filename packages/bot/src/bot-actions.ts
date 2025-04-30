@@ -193,7 +193,7 @@ export const botActions = ({
     ctx.chatAction = 'typing'
 
     // TODO: Make ownerUUID not nullable when we implement subscription plan validation
-    if (ownerUUID && !isPlanValid(overridePlan, ownerUUID)) {
+    if (ownerUUID && !(await isPlanValid(overridePlan, replicaUuid))) {
       await sendError({
         ctx,
         message:
