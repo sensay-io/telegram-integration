@@ -24,7 +24,6 @@ export enum BotCRUDOperationResult {
 type Replica = {
   uuid: string
   slug: string
-  owner_uuid: string | null
   elevenLabsID?: string | null
   telegram_integration: {
     token: string | null
@@ -305,7 +304,6 @@ export class Orchestrator {
     const botDefinition = {
       replicaUUID: replica.uuid,
       replicaSlug: replica.slug,
-      ownerUUID: replica.owner_uuid ?? undefined,
       elevenLabsID: replica.elevenLabsID ?? undefined,
       token: new SensitiveString(replica.telegram_integration?.token ?? ''),
     } satisfies BotDefinition

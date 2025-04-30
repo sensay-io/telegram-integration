@@ -13,7 +13,6 @@ const envSchema = z
     BOT_TOKEN: SensitiveStringSchema,
     REPLICA_UUID: z.string(),
     REPLICA_SLUG: z.string(),
-    OWNER_UUID: z.string().optional(),
     OPENAI_API_KEY: SensitiveStringSchema,
     ELEVENLABS_API_KEY: SensitiveStringSchema,
     ELEVENLABS_ID: z.string().optional(),

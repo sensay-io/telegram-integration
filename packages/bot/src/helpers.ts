@@ -1,3 +1,4 @@
+import { env } from 'node:process'
 import type { AutoChatActionFlavor } from '@grammyjs/auto-chat-action'
 import type { FileFlavor } from '@grammyjs/files'
 import type { Message, Update } from '@grammyjs/types'
@@ -8,6 +9,7 @@ import type { Methods } from 'grammy/out/core/client.js'
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateObject } from 'ai'
 import { codeBlock } from 'common-tags'
+import pkg from 'jsonwebtoken'
 import { z } from 'zod'
 import { config } from './config'
 
@@ -42,12 +44,44 @@ export const hasUserRepliedToReplica = (reply: ParsedTelegramChat['reply'], ment
 }
 
 // TODO: check from www the plan  // TODO: MICHELE: WWW forbidden dependency? Should www be the one with the responsibiity? To be discussed as things might change. Michele needs to talk with Aleksander
-export function isPlanValid(overridePlan: boolean, userId: string) {
+export async function isPlanValid(overridePlan: boolean, replicaUuid: string) {
   if (overridePlan) return true
 
-  const isAllowed = true
+  return await isLicenseActive(replicaUuid)
+}
 
-  return isAllowed
+export const isLicenseActive = async (replicaUuid: string): Promise<boolean> => {
+  const result = await fetch(`${env.SENSAY_URL}/api/license/telegram/${replicaUuid}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${createSignedToken()}`,
+    },
+  })
+
+  if (!result.ok) {
+    throw new Error('Failed to check license')
+  }
+
+  const data = (await result.json()) as { valid: boolean }
+  return data.valid
+}
+
+const createSignedToken = () => {
+  const payload = {
+    sub: 'service-telegram-bots',
+    iat: Math.floor(Date.now() / 1000),
+    exp: Math.floor(Date.now() / 1000) + 60 * 5, // exp in 5 mins
+  }
+
+  if (!env.SENSAY_SECRET_KEY) {
+    throw new Error('SENSAY_SECRET_KEY is not set')
+  }
+
+  const token = pkg.sign(payload, env.SENSAY_SECRET_KEY, {
+    algorithm: 'HS256',
+  })
+  return token
 }
 
 export type ReplyParameterType<M extends Methods<RawApi>, X extends string = never> = OtherApi<
