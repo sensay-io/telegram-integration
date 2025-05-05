@@ -12,7 +12,7 @@ import type { Api, Bot, Context, RawApi } from 'grammy'
 import { botActions } from './bot-actions'
 import { initTelegramBot } from './bot-actions'
 import { PRIVATE_CHAT } from './constants'
-import { hasUserRepliedToReplica } from './helpers'
+import { captureException, hasUserRepliedToReplica } from './helpers'
 import { parse } from './helpers'
 import { sendError } from './responses'
 
@@ -62,31 +62,18 @@ export class BotClient {
 
       const parsedMessage = parse(ctx)
       if (!parsedMessage) return
-      const {
-        messageText,
-        messageId,
-        chatId,
-        messageThreadId,
-        type,
-        isBot,
-        userId,
-        username,
-        reply,
-      } = parsedMessage
+
+      const { messageText, messageId, chatId, messageThreadId, type, isBot, userId, username } =
+        parsedMessage
 
       if (isBot) return
 
-      assert(ctx.from !== undefined)
-      await createUserIfNotExist(ctx.from.id.toString())
-
-      const isReplicaTagged = messageText.includes(`@${this.bot.botInfo.username}`)
-      const isPrivateChat = type === PRIVATE_CHAT
-      const isReplyToReplica = hasUserRepliedToReplica(reply, ctx.me.username)
-
-      const needsReplyByReplica = isReplyToReplica || isReplicaTagged || isPrivateChat
+      console.log('creating user. userId: ', userId)
+      await createUserIfNotExist(userId.toString())
+      console.log('user created. userId: ', userId)
 
       // Save message on database and don't respond
-      if (!needsReplyByReplica) {
+      if (!parsedMessage.needsReplyByReplica) {
         await postV1ReplicasByReplicaUuidChatHistoryTelegram({
           path: { replicaUUID: this.replicaUuid },
           headers: {
@@ -124,14 +111,26 @@ export class BotClient {
     // https://github.com/grammyjs/grammY/blob/0348b93762ab2c7341b63b642f9923a0d31ed7d5/src/bot.ts#L584
     // https://github.com/grammyjs/grammY/issues/503
     this.bot.catch(async (error) => {
-      await sendError({
-        error,
-        ctx: error.ctx,
-        extraErrorInformation: {
-          replicaUuid: this.replicaUuid,
-          userMessage: error.ctx.message?.text,
-        },
-      })
+      const parsedMessage = parse(error.ctx)
+      if (parsedMessage?.needsReplyByReplica) {
+        await sendError({
+          error,
+          ctx: error.ctx,
+          extraErrorInformation: {
+            replicaUuid: this.replicaUuid,
+            userMessage: error.ctx.message?.text,
+          },
+        })
+      } else {
+        captureException(error as Error, {
+          extra: {
+            extraErrorInformation: {
+              replicaUuid: this.replicaUuid,
+              userMessage: error.ctx.message?.text,
+            },
+          },
+        })
+      }
     })
 
     this.bot.start({
@@ -148,9 +147,9 @@ export class BotClient {
   }
 }
 
-async function createUserIfNotExist(userId: string) {
+async function createUserIfNotExist(userId: string): Promise<void> {
   // First, try to get the user using the users/me endpoint
-  const getUserResponse = await getV1UsersMe({
+  const getUserResult = await getV1UsersMe({
     throwOnError: false,
     headers: {
       'X-USER-ID': userId,
@@ -158,25 +157,27 @@ async function createUserIfNotExist(userId: string) {
     },
   })
 
+  console.log('getUserResponse', getUserResult)
+
   // If the response is successful, the user exists
-  if (getUserResponse.response.ok) {
-    return getUserResponse.data
+  if (getUserResult.response.ok) {
+    return
   }
 
   // If we get a 401 error, the user doesn't exist and we need to create them
-  if (getUserResponse.response.status === 401) {
-    return await createUser(userId)
+  if (getUserResult.response.status === 401) {
+    await createUser(userId)
+    return
   }
 
   // For other error statuses, throw an error
-  throw SensayApiError.fromResponse(getUserResponse.response)
+  throw SensayApiError.fromResponse(getUserResult.response)
 }
 
-async function createUser(userId: string) {
-  const createUserResponse = await postV1Users({
+async function createUser(userId: string): Promise<void> {
+  const createUserResult = await postV1Users({
     throwOnError: false,
     body: {
-      id: userId,
       linkedAccounts: [
         {
           accountID: userId,
@@ -186,9 +187,15 @@ async function createUser(userId: string) {
     },
   })
 
-  if (!createUserResponse.response.ok) {
-    throw SensayApiError.fromResponse(createUserResponse.response)
+  console.log('createUserResponse', createUserResult)
+
+  if (createUserResult.response.status === 409) {
+    // A user can already exist if multiple bots are sending
+    // requests to create a user with the same user ID simultaneously
+    return
   }
 
-  return createUserResponse.data
+  if (!createUserResult.response.ok) {
+    throw SensayApiError.fromResponse(createUserResult.response)
+  }
 }
