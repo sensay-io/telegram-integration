@@ -12,6 +12,7 @@ import pkg from 'jsonwebtoken'
 import { z } from 'zod'
 import { config } from './config'
 import { sendError } from './responses'
+import { PRIVATE_CHAT } from './constants'
 
 // TODO: API-589 Refactor this file. Move functions to domain-specific files.
 
@@ -182,27 +183,6 @@ export function parse(
   const messageThreadId = message.message_thread_id
   const isTopicMessage = message.is_topic_message
 
-  if (!messageText) {
-    const response = 'Failed to process message: No text or caption provided.'
-    config.logger.warn(message, response)
-    sendError({ ctx, message: response })
-    return
-  }
-
-  if (!messageId) {
-    const response = 'Failed to process message: Unable to identify message id.'
-    config.logger.warn(message, response)
-    sendError({ ctx, message: response })
-    return
-  }
-
-  if (!chatId) {
-    const response = 'Failed to process message: Unable to identify chat.'
-    config.logger.warn(message, response)
-    sendError({ ctx, message: response })
-    return
-  }
-
   const reply = message.reply_to_message
     ? {
         text: message.reply_to_message.text,
@@ -211,6 +191,38 @@ export function parse(
         caption: message.reply_to_message.caption,
       }
     : undefined
+
+  const isReplicaTagged = messageText?.includes(`@${ctx.me.username}`)
+  const isReplyToReplica = hasUserRepliedToReplica(reply, ctx.me.username)
+  const isPrivateChat = message.chat.type === PRIVATE_CHAT
+  const needsReplyByReplica = isReplyToReplica || isReplicaTagged || isPrivateChat
+
+  if (!messageText) {
+    const response = 'Failed to process message: No text or caption provided.'
+    config.logger.warn(message, response)
+    if (needsReplyByReplica) {
+      sendError({ ctx, message: response })
+    }
+    return
+  }
+
+  if (!messageId) {
+    const response = 'Failed to process message: Unable to identify message id.'
+    config.logger.warn(message, response)
+    if (needsReplyByReplica) {
+      sendError({ ctx, message: response })
+    }
+    return
+  }
+
+  if (!chatId) {
+    const response = 'Failed to process message: Unable to identify chat.'
+    config.logger.warn(message, response)
+    if (needsReplyByReplica) {
+      sendError({ ctx, message: response })
+    }
+    return
+  }
 
   return {
     messageText: messageText,
@@ -225,6 +237,7 @@ export function parse(
     chatId: message.chat.id,
     type: message.chat.type,
     reply,
+    needsReplyByReplica,
   }
 }
 
@@ -246,6 +259,7 @@ export type ParsedTelegramChat = {
     voice: boolean | undefined
     caption: string | undefined
   }
+  needsReplyByReplica: boolean
 }
 
 export const captureException = (error: Error, ...extra: unknown[]) => {
