@@ -109,9 +109,7 @@ export async function sendVoiceRecording({
   if (!elevenlabsId) {
     await sendError({
       ctx,
-      // User might not be the owner of the bot and woudln't know what is Elevenlabs and where to set it.
-      // Let's capture the error in Sentry and send the default error message.
-      error: new Error(`Elevenlabs ID is not set for replica ${replicaUuid}`),
+      message: "Sorry, I can't answer with voice messages.",
     })
     return
   }

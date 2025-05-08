@@ -1,4 +1,3 @@
-import assert from 'node:assert'
 import type { AutoChatActionFlavor } from '@grammyjs/auto-chat-action'
 import type { FileFlavor } from '@grammyjs/files'
 import {
@@ -11,8 +10,7 @@ import { SensayApiError } from '@sensay/telegram-shared'
 import type { Api, Bot, Context, RawApi } from 'grammy'
 import { botActions } from './bot-actions'
 import { initTelegramBot } from './bot-actions'
-import { PRIVATE_CHAT } from './constants'
-import { captureException, hasUserRepliedToReplica } from './helpers'
+import { captureException } from './helpers'
 import { parse } from './helpers'
 import { sendError } from './responses'
 
