@@ -198,10 +198,9 @@ export function parse(
   const needsReplyByReplica = isReplyToReplica || isReplicaTagged || isPrivateChat
 
   if (!messageText) {
-    const response = 'Failed to process message: No text or caption provided.'
-    config.logger.warn(message, response)
+    config.logger.warn(message, 'Failed to process message: No text or caption provided.')
     if (needsReplyByReplica) {
-      sendError({ ctx, message: response })
+      sendError({ ctx, message: 'Caption is empty, please provide a message.' })
     }
     return
   }
