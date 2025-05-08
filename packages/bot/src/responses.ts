@@ -9,7 +9,12 @@ import { config } from './config'
 import { ctxReply } from './helpers'
 import { getReplyParameters } from './helpers'
 import { captureException } from './helpers'
-import type { SendErrorArgs, SendMessageArgs, SendVoiceRecordingArgs } from './types/responses'
+import type {
+  SendErrorArgs,
+  SendMessageArgs,
+  SendVoiceRecordingArgs,
+  TelegramContext,
+} from './types/responses'
 
 export async function sendMessage({
   parsedMessage,
@@ -156,4 +161,12 @@ export async function sendVoiceRecording({
   })
 
   await ctx.api.sendVoice(parsedMessage.chatId, new InputFile(audioStream), replyParameters)
+}
+
+export async function sendSubscriptionRenewMessage(ctx: TelegramContext) {
+  await sendError({
+    ctx,
+    message:
+      'Please renew your subscription. https://www.sensay.io/pricing to visit Sensay pricing.',
+  })
 }

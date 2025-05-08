@@ -66,9 +66,7 @@ export class BotClient {
 
       if (isBot) return
 
-      console.log('creating user. userId: ', userId)
       await createUserIfNotExist(userId.toString())
-      console.log('user created. userId: ', userId)
 
       // Save message on database and don't respond
       if (!parsedMessage.needsReplyByReplica) {

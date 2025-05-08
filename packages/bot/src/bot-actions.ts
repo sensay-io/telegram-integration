@@ -17,11 +17,12 @@ import {
   removeMentionIfNeeded,
   voiceRequest,
 } from './helpers.js'
-import { sendError, sendMessage } from './responses.js'
+import { sendError, sendMessage, sendSubscriptionRenewMessage } from './responses.js'
 import { sendVoiceRecording } from './responses.js'
+import type { TelegramContext } from './types/responses'
 
 export function initTelegramBot(token: string) {
-  const bot = new Bot<FileFlavor<Context & AutoChatActionFlavor>>(token)
+  const bot = new Bot<TelegramContext>(token)
 
   const throttler = apiThrottler()
 
@@ -45,7 +46,7 @@ export function initTelegramBot(token: string) {
 }
 
 export type HandleTelegramBotArgs = {
-  bot: Bot<FileFlavor<Context & AutoChatActionFlavor>, Api<RawApi>>
+  bot: Bot<TelegramContext, Api<RawApi>>
   botUsername: string
   replicaUuid: string
   overridePlan: boolean
@@ -64,18 +65,23 @@ export const botActions = ({
 
     if (!parsedMessage || parsedMessage.isBot) return
 
-    const caption = ctx.message.caption
-    const isPrivateChat = parsedMessage.type === 'private'
-    const isBotMentioned = caption?.includes(`@${botUsername}`)
-    const isTopicMessage = ctx.message.is_topic_message
-
-    const needsReply = hasUserRepliedToReplica(parsedMessage.reply, botUsername)
-
-    if (!isBotMentioned && !needsReply && !isPrivateChat) return
+    if (!parsedMessage.needsReplyByReplica) return
 
     ctx.chatAction = 'typing'
 
+    if (!(await isPlanValid(overridePlan, replicaUuid))) {
+      await sendSubscriptionRenewMessage(ctx)
+      return
+    }
+
+    const caption = ctx.message.caption
+    const isPrivateChat = parsedMessage.type === PRIVATE_CHAT
+    const isTopicMessage = ctx.message.is_topic_message
+
+    const needsReply = parsedMessage.needsReplyByReplica
+
     const messageThreadId = ctx?.message?.message_thread_id
+
     const replyParameters = getReplyParameters('private', {
       needsReply,
       messageId: parsedMessage.messageId,
@@ -114,10 +120,8 @@ export const botActions = ({
     const parsedMessage = parse(ctx)
 
     if (!parsedMessage) return
-    const { messageText, messageId, chatId, messageThreadId, isTopicMessage, isBot, type, reply } =
+    const { messageText, messageId, chatId, messageThreadId, isTopicMessage, isBot, type } =
       parsedMessage
-
-    const needsReply = hasUserRepliedToReplica(reply, botUsername)
 
     if (type === PRIVATE_CHAT) {
       // Private messages are handled in the on('message') event
@@ -126,6 +130,8 @@ export const botActions = ({
     }
 
     if (isBot) return
+
+    const needsReply = parsedMessage.needsReplyByReplica
 
     const replyParameters = getReplyParameters('group', {
       needsReply,
@@ -146,6 +152,11 @@ export const botActions = ({
     }
 
     ctx.chatAction = 'typing'
+
+    if (!(await isPlanValid(overridePlan, replicaUuid))) {
+      await sendSubscriptionRenewMessage(ctx)
+      return
+    }
 
     const { voice_requested, text } = await voiceRequest(messageText)
 
@@ -191,11 +202,7 @@ export const botActions = ({
     ctx.chatAction = 'typing'
 
     if (!(await isPlanValid(overridePlan, replicaUuid))) {
-      await sendError({
-        ctx,
-        message:
-          'Please renew your subscription. https://www.sensay.io/pricing to visit Sensay pricing.',
-      })
+      await sendSubscriptionRenewMessage(ctx)
       return
     }
 

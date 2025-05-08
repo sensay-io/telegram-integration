@@ -13,6 +13,7 @@ import { z } from 'zod'
 import { config } from './config'
 import { sendError } from './responses'
 import { PRIVATE_CHAT } from './constants'
+import { TelegramContext } from './types/responses'
 
 // TODO: API-589 Refactor this file. Move functions to domain-specific files.
 
@@ -118,7 +119,7 @@ export function getReplyParameters(
 
 export async function ctxReply(
   message: string,
-  ctx: FileFlavor<Context & AutoChatActionFlavor>,
+  ctx: TelegramContext,
   replyParameters?: ReplyParameterType<'sendMessage', 'text' | 'chat_id'>,
 ) {
   return await ctx.reply(escapeMarkdown(message), replyParameters)
@@ -168,9 +169,7 @@ Examples:
   return { voice_requested: voice, text }
 }
 
-export function parse(
-  ctx: FileFlavor<Context & AutoChatActionFlavor>,
-): ParsedTelegramChat | undefined {
+export function parse(ctx: TelegramContext): ParsedTelegramChat | undefined {
   const message = ctx.message
   if (!message) {
     config.logger.warn(ctx, 'Failed to process message: No message provided.')

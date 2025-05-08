@@ -5,6 +5,8 @@ import type { Context } from 'grammy'
 import type { Methods, RawApi } from 'grammy/out/core/client'
 import type { ParsedTelegramChat, ReplyParameterType } from '../helpers'
 
+export type TelegramContext = FileFlavor<Context & AutoChatActionFlavor>
+
 export type SendMessageArgs = {
   parsedMessage: ParsedTelegramChat
   needsReply: boolean
@@ -12,7 +14,7 @@ export type SendMessageArgs = {
   replicaUuid: string
   messageThreadId: number | undefined
   botUsername: string
-  ctx: FileFlavor<Context & AutoChatActionFlavor>
+  ctx: TelegramContext
   replyParameters: ReplyParameterType<Methods<RawApi>>
   isTopicMessage?: boolean
   usage?: LanguageModelUsage | undefined
@@ -20,14 +22,14 @@ export type SendMessageArgs = {
 }
 
 export type SendErrorArgs = {
-  ctx: FileFlavor<Context & AutoChatActionFlavor>
+  ctx: TelegramContext
   error?: unknown
   message?: string
   extraErrorInformation?: Record<string, string | undefined>
 }
 
 export type SendVoiceRecordingArgs = {
-  ctx: FileFlavor<Context & AutoChatActionFlavor>
+  ctx: TelegramContext
   parsedMessage: ParsedTelegramChat
   messageText: string
   replicaUuid: string
