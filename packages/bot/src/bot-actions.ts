@@ -65,32 +65,35 @@ export const botActions = ({
 
     if (!parsedMessage || parsedMessage.isBot) return
 
-    if (!parsedMessage.needsReplyByReplica) return
+    const {
+      chatId,
+      messageText,
+      messageId,
+      messageThreadId,
+      isTopicMessage,
+      isPrivateChat,
+      needsReply,
+    } = parsedMessage
 
-    ctx.chatAction = 'typing'
+    if (!needsReply) return
+
+    // TODO: figure out why ctx.chatAction is not working here
+    ctx.api.sendChatAction(chatId, 'typing')
 
     if (!(await isPlanValid(overridePlan, replicaUuid))) {
       await sendSubscriptionRenewMessage(ctx)
       return
     }
 
-    const caption = ctx.message.caption
-    const isPrivateChat = parsedMessage.type === PRIVATE_CHAT
-    const isTopicMessage = ctx.message.is_topic_message
-
-    const needsReply = parsedMessage.needsReplyByReplica
-
-    const messageThreadId = ctx?.message?.message_thread_id
-
     const replyParameters = getReplyParameters('private', {
       needsReply,
-      messageId: parsedMessage.messageId,
+      messageId,
       messageThreadId,
       isTopicMessage,
-      chatId: parsedMessage.chatId,
+      chatId,
     })
 
-    if (!caption) {
+    if (!messageText) {
       await sendError({
         ctx,
         message: 'Caption is empty, please provide a message.',
@@ -99,8 +102,6 @@ export const botActions = ({
     }
 
     const imageURL = (await ctx.getFile()).getUrl()
-
-    const messageText = removeMentionIfNeeded(caption, botUsername, needsReply)
 
     await sendMessage({
       parsedMessage,
@@ -118,20 +119,26 @@ export const botActions = ({
 
   bot.on('message::mention', async (ctx, next) => {
     const parsedMessage = parse(ctx)
-
     if (!parsedMessage) return
-    const { messageText, messageId, chatId, messageThreadId, isTopicMessage, isBot, type } =
-      parsedMessage
 
-    if (type === PRIVATE_CHAT) {
+    const {
+      messageText,
+      messageId,
+      chatId,
+      messageThreadId,
+      needsReply,
+      isTopicMessage,
+      isPrivateChat,
+      isBot,
+    } = parsedMessage
+
+    if (isPrivateChat) {
       // Private messages are handled in the on('message') event
       await next()
       return
     }
 
     if (isBot) return
-
-    const needsReply = parsedMessage.needsReplyByReplica
 
     const replyParameters = getReplyParameters('group', {
       needsReply,
@@ -151,7 +158,8 @@ export const botActions = ({
       return
     }
 
-    ctx.chatAction = 'typing'
+    // TODO: figure out why ctx.chatAction is not working here
+    ctx.api.sendChatAction(chatId, 'typing')
 
     if (!(await isPlanValid(overridePlan, replicaUuid))) {
       await sendSubscriptionRenewMessage(ctx)
@@ -192,9 +200,15 @@ export const botActions = ({
     const parsedMessage = parse(ctx)
     if (!parsedMessage) return
 
-    const { messageText, messageId, chatId, messageThreadId, isTopicMessage, type, reply } =
-      parsedMessage
-    const isPrivateChat = type === 'private'
+    const {
+      messageText,
+      messageId,
+      chatId,
+      messageThreadId,
+      isPrivateChat,
+      isTopicMessage,
+      reply,
+    } = parsedMessage
 
     const needsReply = hasUserRepliedToReplica(reply, botUsername)
     if (!messageText.includes(`@${botUsername}`) && !needsReply && !isPrivateChat) return

@@ -69,7 +69,7 @@ export class BotClient {
       await createUserIfNotExist(userId.toString())
 
       // Save message on database and don't respond
-      if (!parsedMessage.needsReplyByReplica) {
+      if (!parsedMessage.needsReply) {
         await postV1ReplicasByReplicaUuidChatHistoryTelegram({
           path: { replicaUUID: this.replicaUuid },
           headers: {
@@ -108,7 +108,7 @@ export class BotClient {
     // https://github.com/grammyjs/grammY/issues/503
     this.bot.catch(async (error) => {
       const parsedMessage = parse(error.ctx)
-      if (parsedMessage?.needsReplyByReplica) {
+      if (parsedMessage?.needsReply) {
         await sendError({
           error,
           ctx: error.ctx,
