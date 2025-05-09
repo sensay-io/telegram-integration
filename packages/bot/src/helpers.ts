@@ -226,6 +226,7 @@ export function parse(ctx: TelegramContext): ParsedTelegramChat | undefined {
     messageText: messageText,
     messageThreadId: messageThreadId,
     isTopicMessage: isTopicMessage,
+    isPrivateChat: isPrivateChat,
     firstName: message.from.first_name,
     lastName: message.from.last_name,
     username: message.from.username,
@@ -235,7 +236,7 @@ export function parse(ctx: TelegramContext): ParsedTelegramChat | undefined {
     chatId: message.chat.id,
     type: message.chat.type,
     reply,
-    needsReplyByReplica,
+    needsReply: needsReplyByReplica,
   }
 }
 
@@ -243,6 +244,7 @@ export type ParsedTelegramChat = {
   messageText: string
   messageThreadId: number | undefined
   isTopicMessage: boolean | undefined
+  isPrivateChat: boolean | undefined
   firstName: string
   lastName?: string
   username?: string
@@ -257,7 +259,7 @@ export type ParsedTelegramChat = {
     voice: boolean | undefined
     caption: string | undefined
   }
-  needsReplyByReplica: boolean
+  needsReply: boolean
 }
 
 export const captureException = (error: Error, ...extra: unknown[]) => {
