@@ -8,7 +8,6 @@ import { limit } from '@grammyjs/ratelimiter'
 import { apiThrottler } from '@grammyjs/transformer-throttler'
 import { Bot } from 'grammy'
 import type { Api, RawApi } from 'grammy'
-import { PRIVATE_CHAT } from './constants'
 import {
   getReplyParameters,
   hasUserRepliedToReplica,
@@ -32,7 +31,7 @@ export function initTelegramBot(token: string) {
   bot.use(
     limit({
       timeFrame: 10000,
-      limit: 2,
+      limit: 10,
       onLimitExceeded: (ctx) => {
         ctx?.reply('Please refrain from sending too many requests!')
       },
