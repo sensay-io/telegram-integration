@@ -13,7 +13,7 @@ import { z } from 'zod'
 import { config } from './config'
 import { sendError } from './responses'
 import { PRIVATE_CHAT } from './constants'
-import { TelegramContext } from './types/responses'
+import type { TelegramContext } from './types/responses'
 
 // TODO: API-589 Refactor this file. Move functions to domain-specific files.
 

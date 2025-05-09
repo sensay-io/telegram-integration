@@ -1,12 +1,12 @@
-import { type AutoChatActionFlavor, autoChatAction } from '@grammyjs/auto-chat-action'
-import { type FileFlavor, hydrateFiles } from '@grammyjs/files'
+import { autoChatAction } from '@grammyjs/auto-chat-action'
+import { hydrateFiles } from '@grammyjs/files'
 import { limit } from '@grammyjs/ratelimiter'
 // TODO: Replace @grammyjs/transformer-throttler with @grammyjs/auto-retry
 // @grammyjs/transformer-throttler is unmaintained.
 // The docs recommend using the auto-retry plugin instead:
 // https://grammy.dev/plugins/transformer-throttler
 import { apiThrottler } from '@grammyjs/transformer-throttler'
-import { Bot, type Context } from 'grammy'
+import { Bot } from 'grammy'
 import type { Api, RawApi } from 'grammy'
 import { PRIVATE_CHAT } from './constants'
 import {
@@ -199,7 +199,8 @@ export const botActions = ({
     const needsReply = hasUserRepliedToReplica(reply, botUsername)
     if (!messageText.includes(`@${botUsername}`) && !needsReply && !isPrivateChat) return
 
-    ctx.chatAction = 'typing'
+    // TODO: figure out why ctx.chatAction is not working here
+    ctx.api.sendChatAction(chatId, 'typing')
 
     if (!(await isPlanValid(overridePlan, replicaUuid))) {
       await sendSubscriptionRenewMessage(ctx)
