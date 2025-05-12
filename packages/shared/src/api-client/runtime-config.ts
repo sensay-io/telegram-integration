@@ -57,13 +57,14 @@ export const configureInterceptors = (client: Client) => {
   })
 
   client.interceptors.response.use(async (response, _, options) => {
-    if (!response.ok) {
+    if (response.ok) {
+      return response
+    }
+
+    if (options.throwOnError) {
       const error = await SensayApiError.fromResponse(response)
       config.logger.error(error)
-      if (options.throwOnError) {
-        throw error
-      }
-      return response
+      throw error
     }
 
     return response

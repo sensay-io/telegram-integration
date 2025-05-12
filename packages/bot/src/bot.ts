@@ -153,8 +153,6 @@ async function createUserIfNotExist(userId: string): Promise<void> {
     },
   })
 
-  console.log('getUserResponse', getUserResult)
-
   // If the response is successful, the user exists
   if (getUserResult.response.ok) {
     return
@@ -182,8 +180,6 @@ async function createUser(userId: string): Promise<void> {
       ],
     },
   })
-
-  console.log('createUserResponse', createUserResult)
 
   if (createUserResult.response.status === 409) {
     // A user can already exist if multiple bots are sending
