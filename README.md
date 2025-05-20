@@ -1,5 +1,7 @@
 # Sensay Telegram Integration
 
+![TG_Integration_Preview](https://github.com/user-attachments/assets/8777a33b-1b1b-4eb9-85cb-f2c6e04ed78c)
+
 Integration layer that enables Sensay Replicas to interact with users through Telegram, with built-in scalability and management features.
 
 ## Overview
