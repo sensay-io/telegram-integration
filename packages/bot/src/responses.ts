@@ -40,6 +40,7 @@ export async function sendMessage({
       telegram_data: {
         chat_type: parsedMessage.type,
         chat_id: parsedMessage.chatId,
+        chat_name: parsedMessage.chatName,
         user_id: parsedMessage.userId,
         username: parsedMessage.username || '',
         message_id: parsedMessage.messageId,
@@ -131,6 +132,7 @@ export async function sendVoiceRecording({
       telegram_data: {
         chat_type: parsedMessage.type,
         chat_id: parsedMessage.chatId,
+        chat_name: parsedMessage.chatName,
         user_id: parsedMessage.userId,
         username: parsedMessage.username || '',
         message_id: parsedMessage.messageId,
