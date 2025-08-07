@@ -1,7 +1,5 @@
 import { env } from 'node:process'
-import type { AutoChatActionFlavor } from '@grammyjs/auto-chat-action'
-import type { FileFlavor } from '@grammyjs/files'
-import type { Context, RawApi } from 'grammy'
+import type { RawApi } from 'grammy'
 import type { Other as OtherApi } from 'grammy/out/core/api.js'
 import type { Methods } from 'grammy/out/core/client.js'
 
@@ -11,8 +9,8 @@ import { codeBlock } from 'common-tags'
 import pkg from 'jsonwebtoken'
 import { z } from 'zod'
 import { config } from './config'
-import { sendError } from './responses'
 import { PRIVATE_CHAT } from './constants'
+import { sendError } from './responses'
 import type { TelegramContext } from './types/responses'
 
 // TODO: API-589 Refactor this file. Move functions to domain-specific files.
@@ -235,6 +233,7 @@ export function parse(ctx: TelegramContext): ParsedTelegramChat | undefined {
     messageId: message.message_id,
     chatId: message.chat.id,
     type: message.chat.type,
+    chatName: message.chat.title || message.chat.first_name || '',
     reply,
     needsReply: needsReplyByReplica,
   }
@@ -253,6 +252,7 @@ export type ParsedTelegramChat = {
   messageId: number
   chatId: number
   type: 'private' | 'group' | 'supergroup'
+  chatName: string
   reply?: {
     text: string | undefined
     from: string | undefined

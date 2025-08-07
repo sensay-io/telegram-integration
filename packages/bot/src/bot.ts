@@ -61,8 +61,17 @@ export class BotClient {
       const parsedMessage = parse(ctx)
       if (!parsedMessage) return
 
-      const { messageText, messageId, chatId, messageThreadId, type, isBot, userId, username } =
-        parsedMessage
+      const {
+        messageText,
+        messageId,
+        chatId,
+        messageThreadId,
+        type,
+        isBot,
+        userId,
+        username,
+        chatName,
+      } = parsedMessage
 
       if (isBot) return
 
@@ -81,6 +90,7 @@ export class BotClient {
             telegram_data: {
               chat_id: chatId,
               chat_type: type,
+              chat_name: chatName,
               user_id: userId,
               username: username || '',
               message_id: messageId,
