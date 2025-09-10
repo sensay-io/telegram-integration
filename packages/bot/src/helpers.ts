@@ -124,7 +124,8 @@ export async function ctxReply(
 }
 
 export async function voiceRequest(input: string) {
-  const personaSystemMessage = codeBlock`You are tasked with analyzing input to identify mentions of voice messages. Your goals are to determine whether the input includes a request made via a voice message and filter out the reference of asking for a voice message.
+  try {
+    const personaSystemMessage = codeBlock`You are tasked with analyzing input to identify mentions of voice messages. Your goals are to determine whether the input includes a request made via a voice message and filter out the reference of asking for a voice message.
 
  The object you will return will have this schema  {"voice":boolean, "text":string}.
 
@@ -145,26 +146,30 @@ Examples:
 - If they say "hey, send me a voice message with the price of the SNSY token" you will return '{"voice":true, "text": "hey, send the price of the SNSY token"}'.
  `
 
-  const schema = z.object({
-    voice: z.boolean(),
-    text: z.string(),
-  })
+    const schema = z.object({
+      voice: z.boolean(),
+      text: z.string(),
+    })
 
-  const openai = createOpenAI({ apiKey: config.OPENAI_API_KEY.getSensitiveValue() })
+    const openai = createOpenAI({ apiKey: config.OPENAI_API_KEY.getSensitiveValue() })
 
-  const {
-    object: { voice, text },
-  }: { object: { voice: boolean; text: string } } = await generateObject({
-    model: openai('gpt-4o-mini'),
-    system: personaSystemMessage,
-    prompt: input,
-    schema,
-    temperature: 0.4,
-    maxTokens: 250,
-    mode: 'json',
-  })
+    const {
+      object: { voice, text },
+    }: { object: { voice: boolean; text: string } } = await generateObject({
+      model: openai('gpt-4o-mini'),
+      system: personaSystemMessage,
+      prompt: input,
+      schema,
+      temperature: 0.4,
+      maxTokens: 250,
+      mode: 'json',
+    })
 
-  return { voice_requested: voice, text }
+    return { voice_requested: voice, text }
+  } catch (e) {
+    captureException(e as Error)
+    return { voice_requested: false, text: false }
+  }
 }
 
 export function parse(ctx: TelegramContext): ParsedTelegramChat | undefined {
@@ -182,11 +187,11 @@ export function parse(ctx: TelegramContext): ParsedTelegramChat | undefined {
 
   const reply = message.reply_to_message
     ? {
-        text: message.reply_to_message.text,
-        from: message.reply_to_message.from?.username,
-        voice: !!message.reply_to_message.voice,
-        caption: message.reply_to_message.caption,
-      }
+      text: message.reply_to_message.text,
+      from: message.reply_to_message.from?.username,
+      voice: !!message.reply_to_message.voice,
+      caption: message.reply_to_message.caption,
+    }
     : undefined
 
   const isReplicaTagged = messageText?.includes(`@${ctx.me.username}`)
