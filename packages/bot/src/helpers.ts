@@ -120,7 +120,11 @@ export async function ctxReply(
   ctx: TelegramContext,
   replyParameters?: ReplyParameterType<'sendMessage', 'text' | 'chat_id'>,
 ) {
-  return await ctx.reply(escapeMarkdown(message), replyParameters)
+  try {
+    return await ctx.reply(escapeMarkdown(message), replyParameters)
+  } catch (e) {
+    captureException(e as Error)
+  }
 }
 
 export async function voiceRequest(input: string) {
@@ -168,7 +172,7 @@ Examples:
     return { voice_requested: voice, text }
   } catch (e) {
     captureException(e as Error)
-    return { voice_requested: false, text: false }
+    return { voice_requested: false, text: '' }
   }
 }
 
