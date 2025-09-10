@@ -76,8 +76,7 @@ export const botActions = ({
 
     if (!needsReply) return
 
-    // TODO: figure out why ctx.chatAction is not working here
-    ctx.api.sendChatAction(chatId, 'typing')
+    ctx.chatAction = 'typing'
 
     if (!(await isPlanValid(overridePlan, replicaUuid))) {
       await sendSubscriptionRenewMessage(ctx)
@@ -157,8 +156,7 @@ export const botActions = ({
       return
     }
 
-    // TODO: figure out why ctx.chatAction is not working here
-    ctx.api.sendChatAction(chatId, 'typing')
+    ctx.chatAction = 'typing'
 
     if (!(await isPlanValid(overridePlan, replicaUuid))) {
       await sendSubscriptionRenewMessage(ctx)
@@ -212,8 +210,7 @@ export const botActions = ({
     const needsReply = hasUserRepliedToReplica(reply, botUsername)
     if (!messageText.includes(`@${botUsername}`) && !needsReply && !isPrivateChat) return
 
-    // TODO: figure out why ctx.chatAction is not working here
-    ctx.api.sendChatAction(chatId, 'typing')
+    ctx.chatAction = 'typing'
 
     if (!(await isPlanValid(overridePlan, replicaUuid))) {
       await sendSubscriptionRenewMessage(ctx)
