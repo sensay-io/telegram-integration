@@ -14,7 +14,6 @@ export const BotDefinitionSchema = z.object({
   replicaSlug: z.string(),
   ownerUUID: z.string().optional(),
   token: SensitiveStringSchema,
-  elevenLabsID: z.string().optional(),
 })
 
 export type BotDefinition = z.infer<typeof BotDefinitionSchema>

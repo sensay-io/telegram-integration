@@ -47,7 +47,6 @@ export type HandleTelegramBotArgs = {
   botUsername: string
   replicaUuid: string
   overridePlan: boolean
-  elevenlabsId?: string
 }
 
 export const botActions = ({
@@ -55,7 +54,6 @@ export const botActions = ({
   botUsername,
   replicaUuid,
   overridePlan,
-  elevenlabsId,
 }: HandleTelegramBotArgs) => {
   bot.on('message:photo', async (ctx) => {
     const parsedMessage = parse(ctx)

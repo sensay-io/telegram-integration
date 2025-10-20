@@ -54,7 +54,6 @@ export class BotHost {
       BOT_TOKEN: botDefinition.token.getSensitiveValue(),
       REPLICA_UUID: botDefinition.replicaUUID,
       REPLICA_SLUG: botDefinition.replicaSlug,
-      ELEVENLABS_ID: botDefinition.elevenLabsID,
       NODE_ENV: clusterConfig.NODE_ENV,
       LOG_LEVEL: clusterConfig.LOG_LEVEL,
       SENSAY_API_URL: clusterConfig.SENSAY_API_URL,
@@ -65,19 +64,16 @@ export class BotHost {
       SENTRY_BAGGAGE_HEADER: sentryBaggageHeader,
       VERCEL_PROTECTION_BYPASS_KEY: clusterConfig.VERCEL_PROTECTION_BYPASS_KEY.getSensitiveValue(),
       OPENAI_API_KEY: clusterConfig.OPENAI_API_KEY.getSensitiveValue(),
-      ELEVENLABS_API_KEY: clusterConfig.ELEVENLABS_API_KEY.getSensitiveValue(),
     } satisfies Omit<
       Env,
       | 'BOT_TOKEN'
       | 'SENSAY_API_KEY'
       | 'OPENAI_API_KEY'
-      | 'ELEVENLABS_API_KEY'
       | 'VERCEL_PROTECTION_BYPASS_KEY'
     > & {
       BOT_TOKEN: string
       SENSAY_API_KEY: string
       OPENAI_API_KEY: string
-      ELEVENLABS_API_KEY: string
       VERCEL_PROTECTION_BYPASS_KEY: string
     })
 
@@ -107,7 +103,7 @@ export class BotHost {
       }
 
       // Ignore timeout error. It means that the worker didn't exit gracefully
-      await this.waitForExit().catch(() => {})
+      await this.waitForExit().catch(() => { })
     } finally {
       if (!this.worker.isDead()) {
         this.worker.kill(Signal.SIGKILL)

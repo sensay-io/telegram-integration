@@ -24,7 +24,6 @@ export enum BotCRUDOperationResult {
 type Replica = {
   uuid: string
   slug: string
-  elevenLabsID?: string | null
   telegram_integration: {
     token: string | null
     service_name: string | null
@@ -197,7 +196,7 @@ export class Orchestrator {
       newBotDefinition.replicaSlug === existingBotDefinition?.replicaSlug &&
       newBotDefinition.ownerUUID === existingBotDefinition?.ownerUUID &&
       newBotDefinition.token.getSensitiveValue() ===
-        existingBotDefinition?.token.getSensitiveValue()
+      existingBotDefinition?.token.getSensitiveValue()
     ) {
       return BotCRUDOperationResult.Updated
     }
@@ -304,7 +303,6 @@ export class Orchestrator {
     const botDefinition = {
       replicaUUID: replica.uuid,
       replicaSlug: replica.slug,
-      elevenLabsID: replica.elevenLabsID ?? undefined,
       token: new SensitiveString(replica.telegram_integration?.token ?? ''),
     } satisfies BotDefinition
     return botDefinition

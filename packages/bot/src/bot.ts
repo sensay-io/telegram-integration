@@ -26,7 +26,6 @@ export class BotClient {
     logger: Logger,
     botToken: string,
     private readonly replicaUuid: string,
-    private readonly elevenLabsId?: string,
   ) {
     this.bot = initTelegramBot(botToken)
     this.logger = logger.child({
@@ -109,7 +108,6 @@ export class BotClient {
       botUsername: this.bot.botInfo.username,
       replicaUuid: this.replicaUuid,
       overridePlan: false,
-      elevenlabsId: this.elevenLabsId,
     })
 
     // This will only catch errors in the middlewares.
