@@ -14,10 +14,8 @@ import {
   isPlanValid,
   parse,
   removeMentionIfNeeded,
-  voiceRequest,
 } from './helpers.js'
 import { sendError, sendMessage, sendSubscriptionRenewMessage } from './responses.js'
-import { sendVoiceRecording } from './responses.js'
 import type { TelegramContext } from './types/responses'
 
 export function initTelegramBot(token: string) {
@@ -163,23 +161,6 @@ export const botActions = ({
       return
     }
 
-    const { voice_requested, text } = await voiceRequest(messageText)
-
-    if (voice_requested) {
-      await sendVoiceRecording({
-        ctx,
-        parsedMessage,
-        messageText: text,
-        replicaUuid,
-        elevenlabsId,
-        needsReply,
-        messageThreadId,
-        isTopicMessage,
-        replyParameters,
-      })
-      return
-    }
-
     await sendMessage({
       parsedMessage,
       needsReply,
@@ -217,8 +198,6 @@ export const botActions = ({
       return
     }
 
-    const { voice_requested, text } = await voiceRequest(messageText)
-
     const chatType = isPrivateChat ? 'private' : 'group'
     const replyParameters = getReplyParameters(chatType, {
       needsReply,
@@ -227,21 +206,6 @@ export const botActions = ({
       chatId: chatId,
       isTopicMessage,
     })
-
-    if (voice_requested) {
-      await sendVoiceRecording({
-        ctx: ctx,
-        parsedMessage,
-        messageText: text,
-        replicaUuid,
-        elevenlabsId,
-        needsReply,
-        messageThreadId,
-        isTopicMessage,
-        replyParameters,
-      })
-      return
-    }
 
     const userMessage = removeMentionIfNeeded(messageText, botUsername, needsReply)
     if (!userMessage) {

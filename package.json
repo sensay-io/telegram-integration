@@ -5,9 +5,17 @@
   "license": "Apache-2.0",
   "author": "Sensay",
   "description": "Sensay Telegram integration",
-  "keywords": ["bots", "telegram", "sensay"],
+  "keywords": [
+    "bots",
+    "telegram",
+    "sensay"
+  ],
   "private": true,
-  "workspaces": ["packages/shared", "packages/bot", "packages/orchestrator"],
+  "workspaces": [
+    "packages/shared",
+    "packages/bot",
+    "packages/orchestrator"
+  ],
   "engines": {
     "node": "22.x"
   },

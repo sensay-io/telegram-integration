@@ -3,11 +3,7 @@ import type { RawApi } from 'grammy'
 import type { Other as OtherApi } from 'grammy/out/core/api.js'
 import type { Methods } from 'grammy/out/core/client.js'
 
-import { createOpenAI } from '@ai-sdk/openai'
-import { generateObject } from 'ai'
-import { codeBlock } from 'common-tags'
 import pkg from 'jsonwebtoken'
-import { z } from 'zod'
 import { config } from './config'
 import { PRIVATE_CHAT } from './constants'
 import { sendError } from './responses'
@@ -124,55 +120,6 @@ export async function ctxReply(
     return await ctx.reply(escapeMarkdown(message), replyParameters)
   } catch (e) {
     captureException(e as Error)
-  }
-}
-
-export async function voiceRequest(input: string) {
-  try {
-    const personaSystemMessage = codeBlock`You are tasked with analyzing input to identify mentions of voice messages. Your goals are to determine whether the input includes a request made via a voice message and filter out the reference of asking for a voice message.
-
- The object you will return will have this schema  {"voice":boolean, "text":string}.
-
-Voice messages:
-  - Check the provided context for any mention of voice messages.
-  - Return an object with key 'voice' and 'text' indicating whether a voice message is discussed and the text without the reference of asking for a voice message.
-  - Example:
-    - If they say "what is the price of the car" you will return '{"voice":false , "text": "what is the price of the car"}'.
-    - If they say "hey OpenAI, tell me what time it is with a voice message" you will return '{"voice":true, "text": "hey OpenAI, tell me what time it is"}'.
-
-
-Pay attention to the context to correctly identify whether it is a voice message request. Return an object with key 'voice' and 'text' in that case.
-
-Examples:
-- If they say "hey OpenAI, tell me what time it is with a voice message" you will return '{"voice":true, "text": "hey OpenAI, tell me what time it is"}'.
-- If they say "what is the price of the car" you will return '{"voice":false, "text": "what is the price of the car"}'.
-- If they say "what's the price of the SNSY token" you will return '{"voice":false, "text": "what's the price of the SNSY token"}'.
-- If they say "hey, send me a voice message with the price of the SNSY token" you will return '{"voice":true, "text": "hey, send the price of the SNSY token"}'.
- `
-
-    const schema = z.object({
-      voice: z.boolean(),
-      text: z.string(),
-    })
-
-    const openai = createOpenAI({ apiKey: config.OPENAI_API_KEY.getSensitiveValue() })
-
-    const {
-      object: { voice, text },
-    }: { object: { voice: boolean; text: string } } = await generateObject({
-      model: openai('gpt-4o-mini'),
-      system: personaSystemMessage,
-      prompt: input,
-      schema,
-      temperature: 0.4,
-      maxTokens: 250,
-      mode: 'json',
-    })
-
-    return { voice_requested: voice, text }
-  } catch (e) {
-    captureException(e as Error)
-    return { voice_requested: false, text: '' }
   }
 }
 

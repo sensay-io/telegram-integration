@@ -2,17 +2,12 @@ import {
   SensayApiError,
   postV1ReplicasByReplicaUuidChatCompletionsTelegram,
 } from '@sensay/telegram-shared'
-import { ElevenLabsClient } from 'elevenlabs'
-import { InputFile } from 'grammy'
-import removeMd from 'remove-markdown'
-import { config } from './config'
 import { ctxReply } from './helpers'
 import { getReplyParameters } from './helpers'
 import { captureException } from './helpers'
 import type {
   SendErrorArgs,
   SendMessageArgs,
-  SendVoiceRecordingArgs,
   TelegramContext,
 } from './types/responses'
 
@@ -97,72 +92,6 @@ export const sendError = async ({ ctx, error, message, extraErrorInformation }: 
   } catch (err) {
     await ctxReply(errorMessage, ctx)
   }
-}
-
-// ignore for now
-const elevenLabs = new ElevenLabsClient({
-  apiKey: config.ELEVENLABS_API_KEY.getSensitiveValue(),
-})
-
-export async function sendVoiceRecording({
-  ctx,
-  parsedMessage,
-  messageText,
-  elevenlabsId,
-  replicaUuid,
-  replyParameters,
-}: SendVoiceRecordingArgs) {
-  if (!elevenlabsId) {
-    await sendError({
-      ctx,
-      message: "Sorry, I can't answer with voice messages.",
-    })
-    return
-  }
-
-  const completionResponse = await postV1ReplicasByReplicaUuidChatCompletionsTelegram({
-    path: { replicaUUID: replicaUuid },
-    headers: {
-      'X-USER-ID': ctx.from?.id.toString() || '',
-      'X-USER-ID-TYPE': 'telegram',
-    },
-    body: {
-      content: messageText,
-      skip_chat_history: false,
-      telegram_data: {
-        chat_type: parsedMessage.type,
-        chat_id: parsedMessage.chatId,
-        chat_name: parsedMessage.chatName,
-        user_id: parsedMessage.userId,
-        username: parsedMessage.username || '',
-        message_id: parsedMessage.messageId,
-        message_thread_id: undefined,
-      },
-    },
-  })
-
-  const text = completionResponse.data?.content
-  if (!text) {
-    throw SensayApiError.fromResponse(completionResponse.response)
-  }
-
-  const textWithoutMarkdown = removeMd(
-    text.replaceAll('\\n-', '').replaceAll('\\n', '').replaceAll('  ', ' '),
-    {
-      stripListLeaders: true,
-      listUnicodeChar: '',
-      gfm: true,
-      useImgAltText: false,
-    },
-  )
-
-  const audioStream = await elevenLabs.generate({
-    voice: elevenlabsId,
-    model_id: 'eleven_multilingual_v2',
-    text: textWithoutMarkdown,
-  })
-
-  await ctx.api.sendVoice(parsedMessage.chatId, new InputFile(audioStream), replyParameters)
 }
 
 export async function sendSubscriptionRenewMessage(ctx: TelegramContext) {
