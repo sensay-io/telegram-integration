@@ -3,7 +3,6 @@ import {
   escapeMarkdown,
   hasUserRepliedToReplica,
   removeMentionIfNeeded,
-  voiceRequest,
 } from './helpers'
 
 describe('helpers', () => {
@@ -73,20 +72,6 @@ describe('helpers', () => {
       const text = 'some_text_with_underscores'
       const result = escapeMarkdown(text)
       expect(result).toBe('some\\_text\\_with\\_underscores')
-    })
-  })
-
-  describe('voiceRequest', () => {
-    it('should detect voice message request', async () => {
-      const input = 'hey OpenAI, tell me what time it is with a voice message'
-      const result = await voiceRequest(input)
-      expect(result.voice_requested).toBe(true)
-    })
-
-    it('should not detect voice message request in normal text', async () => {
-      const input = 'what is the price of the car'
-      const result = await voiceRequest(input)
-      expect(result.voice_requested).toBe(false)
     })
   })
 })

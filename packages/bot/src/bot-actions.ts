@@ -142,7 +142,7 @@ export const botActions = ({
       isTopicMessage,
     })
 
-    const userMessage = removeMentionIfNeeded(messageText, botUsername, needsReply)
+    const userMessage = removeMentionIfNeeded(messageText, botUsername)
 
     if (!userMessage) {
       await sendError({
@@ -205,7 +205,7 @@ export const botActions = ({
       isTopicMessage,
     })
 
-    const userMessage = removeMentionIfNeeded(messageText, botUsername, needsReply)
+    const userMessage = removeMentionIfNeeded(messageText, botUsername)
     if (!userMessage) {
       await sendError({
         ctx,

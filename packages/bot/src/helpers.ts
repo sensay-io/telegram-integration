@@ -19,7 +19,7 @@ export class ParseError extends Error {
   }
 }
 
-export function removeMentionIfNeeded(text: string, mention: string, reply?: boolean) {
+export function removeMentionIfNeeded(text: string, mention: string) {
   const mentionWithSymbol = `@${mention}`
 
   if (mention) {
@@ -111,16 +111,57 @@ export function getReplyParameters(
   return { parse_mode: 'Markdown' }
 }
 
+
+
 export async function ctxReply(
   message: string,
   ctx: TelegramContext,
   replyParameters?: ReplyParameterType<'sendMessage', 'text' | 'chat_id'>,
 ) {
+
   try {
-    return await ctx.reply(escapeMarkdown(message), replyParameters)
+    const messageParts = splitMessage(escapeMarkdown(message));
+    for (const messagePart of messageParts) {
+      await ctx.reply(messagePart, replyParameters)
+      // Introduce a small delay to respect Telegram's rate limits
+      await new Promise(resolve => setTimeout(resolve, 500))
+    }
+
   } catch (e) {
     captureException(e as Error)
   }
+}
+
+// A robust function to split a long message into smaller, valid messages.
+function splitMessage(message: string): string[] {
+  const parts = [];
+  let remainingText = message;
+  const maxChars = 4096;
+
+  while (remainingText.length > maxChars) {
+    // Find the last period, question mark, or exclamation point before the limit.
+    const splitIndex = remainingText.lastIndexOf('.', maxChars) ||
+      remainingText.lastIndexOf('?', maxChars) ||
+      remainingText.lastIndexOf('!', maxChars);
+
+    // If no sentence-ending punctuation is found, split by the last space.
+    let endIndex = splitIndex;
+    if (endIndex === -1 || endIndex < maxChars * 0.75) {
+      endIndex = remainingText.lastIndexOf(' ', maxChars);
+    }
+
+    // If no space is found, do a hard character split.
+    if (endIndex === -1) {
+      endIndex = maxChars;
+    }
+
+    // Add the chunk and update the remaining text.
+    parts.push(remainingText.slice(0, endIndex));
+    remainingText = remainingText.slice(endIndex).trim();
+  }
+
+  parts.push(remainingText);
+  return parts;
 }
 
 export function parse(ctx: TelegramContext): ParsedTelegramChat | undefined {
