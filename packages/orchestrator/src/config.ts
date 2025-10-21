@@ -19,7 +19,6 @@ const envSchema = z
     HEALTH_CHECK_INTERVAL_MS: z.coerce.number().default(5000),
     GRACEFUL_SHUTDOWN_TIMEOUT_MS: z.coerce.number().default(1000),
     MAX_FAILED_START_ATTEMPTS: z.coerce.number().default(3),
-    OPENAI_API_KEY: SensitiveStringSchema,
   })
   .extend(commonEnvSchema.shape)
 
