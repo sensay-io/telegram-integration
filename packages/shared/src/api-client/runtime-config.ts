@@ -18,12 +18,12 @@ export class SensayApiError extends Error {
   }
 
   static async fromResponse(response: Response): Promise<SensayApiError> {
-    const res = response.clone()
     try {
+      const res = response.clone()
       const body = await res.text()
       return new SensayApiError(res.statusText, res.status, body)
     } catch (e) {
-      return new SensayApiError(res.statusText, res.status)
+      return new SensayApiError(response.statusText, response.status)
     }
   }
 }
