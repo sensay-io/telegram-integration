@@ -242,12 +242,23 @@ export class Orchestrator {
       return
     }
 
-    for (const botDefinition of this.botsDefinitions.values()) {
+    for (const botDefinition of Array.from(this.botsDefinitions.values())) {
       try {
-        if (this.botsSupervisors.has(botDefinition.replicaUUID)) {
-          await this.updateBot(botDefinition.replicaUUID, botDefinition.replicaSlug)
-        } else {
+        const existingSupervisor = this.botsSupervisors.get(botDefinition.replicaUUID)
+        if (!existingSupervisor) {
           await this.addBot(botDefinition.replicaUUID, botDefinition.replicaSlug)
+        } else if (existingSupervisor.status === BotStatus.FAILED) {
+          // A bot that has exhausted its restart attempts stays FAILED indefinitely:
+          // updateBot() is a no-op when the definition is unchanged, so the supervisor is
+          // never revived and the bot silently stops responding (no polling, no error).
+          // Recreate it here so every reload cycle gives a permanently-failed bot a fresh
+          // start with the attempt counter reset, letting the fleet self-heal without a
+          // manual service restart.
+          this.logger.warn(`Reviving failed bot ${botDefinition.replicaSlug}`)
+          await this.deleteBotUnchecked(botDefinition.replicaUUID)
+          await this.addBotUnchecked(botDefinition)
+        } else {
+          await this.updateBot(botDefinition.replicaUUID, botDefinition.replicaSlug)
         }
       } catch (error) {
         this.logger.error(error as Error, `Failed to reload bot ${botDefinition.replicaSlug}`)
