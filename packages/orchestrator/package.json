@@ -15,8 +15,7 @@
     "node": "22.x"
   },
   "scripts": {
-    "build": "node esbuild.config.mjs && (npm run sentry:upload-sourcemaps || echo 'Sentry source map upload failed, continuing...')",
-    "sentry:upload-sourcemaps": "sentry-cli sourcemaps upload --org sensay-io --project telegram-integration --release $RAILWAY_GIT_COMMIT_SHA --rewrite --url-prefix '/var/task/telegram-integration' ./dist",
+    "build": "node esbuild.config.mjs",
     "start": "node --env-file-if-exists=.env.local dist/index.js",
     "dev": "npm run dev:bun",
     "dev:bun": "bun run --env-file=.env.local --watch src/index.ts",
@@ -42,7 +41,6 @@
   },
   "devDependencies": {
     "@faker-js/faker": "^9.7.0",
-    "@sentry/cli": "^2.56.1",
     "@sentry/esbuild-plugin": "^3.3.1",
     "@sentry/types": "^9.12.0",
     "@types/node": "^22.13.11",
