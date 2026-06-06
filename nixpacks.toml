@@ -1,0 +1,11 @@
+# Install all packages WITHOUT running lifecycle scripts, then run them via `npm rebuild`
+# once the full dependency tree is on disk.
+#
+# Works around npm behaviour on Railway's build image where a package's install script
+# runs before its own dependency is linked. Specifically, @sentry/cli (pulled in
+# transitively by @sentry/esbuild-plugin) `require()`s `https-proxy-agent` at the top of
+# its install script and crashes `npm ci` with "Cannot find module 'https-proxy-agent'".
+# Running the scripts after the tree is complete makes resolution reliable. esbuild and
+# @biomejs/biome native binaries are set up by `npm rebuild` as well.
+[phases.install]
+cmds = ["npm ci --ignore-scripts", "npm rebuild"]
