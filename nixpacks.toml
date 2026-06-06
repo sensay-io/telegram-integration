@@ -1,8 +1,10 @@
-# Railway's default build image ships npm 10, whose npm-workspaces hoisting/resolution
-# leaves nested packages and sibling workspaces unable to resolve ROOT-hoisted
-# dependencies during install/build — e.g. @sentry/cli -> https-proxy-agent (crashes
-# `npm ci`), and packages/shared -> esbuild (crashes the build with ERR_MODULE_NOT_FOUND).
-# npm 11 hoists/links these correctly (verified: a full clean `npm ci` + `npm run build`
-# succeeds on npm 11). Upgrade npm before installing. Node version is unchanged (22.x).
+# Railway's build image ships npm 10, whose npm-workspaces hoisting/resolution leaves
+# nested packages / sibling workspaces unable to resolve root-hoisted deps during
+# install & build (e.g. @sentry/cli -> https-proxy-agent; packages/shared -> esbuild).
+# npm 11 resolves these correctly (verified locally).
+#
+# --include=dev is required because the service sets NODE_ENV=production, which would
+# otherwise make `npm ci` omit devDependencies (esbuild, @sentry/esbuild-plugin, ...)
+# that the build needs. (Nixpacks' default install forces dev deps; this override must too.)
 [phases.install]
-cmds = ["npm install -g npm@11 && npm ci"]
+cmds = ["npm install -g npm@11 && npm ci --include=dev"]
